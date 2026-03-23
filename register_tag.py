@@ -1,5 +1,4 @@
 import argparse
-import json
 import mysql.connector
 
 parser = argparse.ArgumentParser(add_help=True, description="Script used for registering tag into database.")
