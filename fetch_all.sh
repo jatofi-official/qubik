@@ -7,7 +7,7 @@
     read database
 } < db.txt
 
-other_flags = ""
+other_flags=""
 [[ -n "$host" ]] && other_flags="$other_flags -host $host"   #I used AI for these two lines. They work by checking if variable has non-zero length, then it executes the second part after &&
 [[ -n "$database" ]] && other_flags="$other_flags -database $database"
 
