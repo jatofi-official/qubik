@@ -21,4 +21,7 @@ CREATE TABLE location_data (
     CONSTRAINT tag_hash_foreign_key 
         FOREIGN KEY (hashed_key) 
         REFERENCES tags(hashed_key)
+
+    CONSTRAINT unique_tag
+        UNIQUE (time,hashed_key)
 );

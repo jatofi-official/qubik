@@ -27,13 +27,17 @@ my_database = mysql.connector.connect(
 cursor = my_database.cursor()
 
 def insert_entry(entry):
-    sql = "INSERT INTO location_data (time, hashed_key, latitude, longitude, accuracy, battery, confidence) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT IGNORE INTO location_data (time, hashed_key, latitude, longitude, accuracy, battery, confidence) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     val = (entry["time"].replace("T"," "), args.tag_hash ,entry["latitude"], entry["longitude"], entry["accuracy"], entry["battery"], entry["confidence"])
     try:
         cursor.execute(sql,val)
         my_database.commit()
-    except mysql.connector.IntegrityError:
-        print("Error: Tag is not yet registered")
+
+        if verbose:
+            if cursor.rowcount == 0:
+                print(f"Skipped for {entry["time"].replace("T","")} - {args.tag_hash}. Duplicate or missing registry")
+            else:
+                    print("Successfully inserted")
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         
@@ -59,7 +63,5 @@ if verbose:
 i = 0
 # Inserting each json object
 for entry in json_found:
-    if verbose:
-        print(f"Inserting entry {i}")
     insert_entry(entry)
     i+=1
