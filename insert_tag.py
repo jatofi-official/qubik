@@ -3,11 +3,11 @@ import json
 import sys
 import mysql.connector
 
-parser = argparse.ArgumentParser(add_help=True, description="Script used for inserting locations a single tag into database. Expects data in json format.")
+parser = argparse.ArgumentParser(add_help=True, description="Script used for inserting locations of a single tag into database. Expects data in json format.")
 parser.add_argument("--verbose", "-v", action ="store_true", help="Prints more information, does not print json. Used for manual testing.")
 parser.add_argument("user", help="Mysql user.")
 parser.add_argument("password", help="Mysql user password.")
-parser.add_argument("-host", default="localost" ,help="Mysql host ip.")
+parser.add_argument("-host", default="localhost" ,help="Mysql host ip.")
 parser.add_argument("-database", default="tag_tracker", help="Name of database.")
 
 # Parsing arguments
@@ -48,3 +48,5 @@ if verbose:
 # Inserting each json object
 for entry in json_found:
     time = entry.get("time")
+
+    print(time)
