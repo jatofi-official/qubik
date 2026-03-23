@@ -12,6 +12,6 @@ other_flags=""
 [[ -n "$database" ]] && other_flags="$other_flags -database $database"
 
 
-while read -u 9 -r arg1 arg2 name; do
+while read -r arg1 arg2 name; do
     python3 fetch_tag_locations.py "$arg1" "$arg2" | python3 insert_tag.py "$user" "$password" "$arg1" $other_flags
-done 9< <(cat keys.txt; echo "")
+done <keys.txt
