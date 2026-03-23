@@ -1,2 +1,2 @@
 cryptography
-mysql-connectior-python
+mysql-connector-python
