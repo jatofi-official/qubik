@@ -43,6 +43,13 @@ def insert_entry(entry):
         
 
 stdin = sys.stdin.read().lstrip()
+
+# If no standard input
+if not stdin:
+    if verbose:
+        print("No input received, exiting.")
+        sys.exit(0)
+
 decoder = json.JSONDecoder()
 
 json_found = []  
