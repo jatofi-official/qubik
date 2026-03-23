@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(add_help=True, description="Script used for get
 parser.add_argument("hashed_key", help="Public tag key for getting data.")
 parser.add_argument("private_key", help="Private tag key for decrypting.")
 parser.add_argument("--verbose", "-v", action ="store_true", help="Prints more information, does not print json. Used for manual testing.")
-parser.add_argument('-time', '-t', help='How many hours to get results from. Default is 168', default=168, type=int)
+parser.add_argument('-time', '-t', help='How many days to get results from. Default is 7', default=7, type=int)
 args = parser.parse_args()
 
 # CONFIGURATION
@@ -88,7 +88,7 @@ def decrypt_report(payload_b64, priv_key_b64):
     return lat, lon, timestamp, accuracy, battery, confidence
 
 # EXECUTION
-HOURS_BACK = args.time
+DAYS_BACK = args.time
 verbose = args.verbose 
 
 if verbose:
@@ -96,17 +96,17 @@ if verbose:
     print(f"Connecting to {ENDPOINT}...")
 
 try:
-    # requesting data from past 7 days
+    # requesting data
     request_data = {
         'ids': [ADV_KEY_HASHED],
-        'hours': HOURS_BACK
+        'days': DAYS_BACK
     }
     
     r = requests.post(ENDPOINT, json=request_data)
     results = r.json().get('results', [])
     
     if verbose:
-        print(f"Found {len(results)} reports from the last {HOURS_BACK // 24} days. Decrypting...\n")
+        print(f"Found {len(results)} reports from the last {DAYS_BACK} days. Decrypting...\n")
     
     for res in results:
         try:
