@@ -60,15 +60,14 @@ while len(stdin) > 0:
     parsed_json, consumed = decoder.raw_decode(stdin)
     stdin = stdin[consumed:]
 
-    json_found.append(parsed_json)
+    json_found.insert(0,parsed_json)
     stdin = stdin.lstrip()
 
 if verbose:
     print(f"Read {len(json_found)} entries.")
     print("Inserting into database...")
 
-i = 0
+
 # Inserting each json object
 for entry in json_found:
     insert_entry(entry)
-    i+=1
