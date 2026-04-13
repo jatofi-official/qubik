@@ -4,7 +4,7 @@ import bluetooth
 import time
 
 # --- Configuration ---
-adv_key_b64 = '/hryBI34cKFFb5f+Ay2G4I2M++yW6DyWRTbaww=='
+adv_key_b64 = 'KKSh25lSRPxZbHRSOI2SP6j6qDPNW2koDvNTqg=='
 sleep_ms = 300000  # 5 minutes (300,000 ms)
 # ---------------------
 

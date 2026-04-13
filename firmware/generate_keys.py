@@ -81,10 +81,8 @@ if args.nkeys < 1 or args.nkeys > MAX_KEYS:
 current_directory = os.getcwd()
 final_directory = os.path.join(current_directory, OUTPUT_FOLDER)
 
-if os.path.exists(OUTPUT_FOLDER):
-    shutil.rmtree(OUTPUT_FOLDER)
-
-os.mkdir(final_directory)
+if not os.path.exists(OUTPUT_FOLDER):
+    os.mkdir(final_directory)
 
 
 prefix = ''
