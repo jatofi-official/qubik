@@ -13,5 +13,5 @@ other_flags=""
 
 
 while read -r arg1 arg2 name; do
-    python3 fetch_tag_locations.py "$arg1" "$arg2" | python3 insert_tag.py "$user" "$password" "$arg1" $other_flags
+    python3 fetch_tag_locations.py "$arg1" "$arg2" | python3 insert_tag.py "$user" "$password" "$arg1" $other_flags -v
 done <keys.txt
