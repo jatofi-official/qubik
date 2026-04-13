@@ -27,17 +27,24 @@ my_database = mysql.connector.connect(
 cursor = my_database.cursor()
 
 def insert_entry(entry):
-    sql = "INSERT IGNORE INTO location_data (time, hashed_key, latitude, longitude, accuracy, battery, confidence) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    val = (entry["time"].replace("T"," "), args.tag_hash ,entry["latitude"], entry["longitude"], entry["accuracy"], entry["battery"], entry["confidence"])
-    try:
-        cursor.execute(sql,val)
-        my_database.commit()
-
+    formatted_time = entry["time"].replace("T", " ")
+    
+    check_sql = "SELECT 1 FROM location_data WHERE time = %s AND hashed_key = %s LIMIT 1"
+    cursor.execute(check_sql, (formatted_time, args.tag_hash))
+    
+    if cursor.fetchone():
         if verbose:
-            if cursor.rowcount == 0:
-                print(f"Skipped for {entry["time"].replace("T","")} - {args.tag_hash}. Duplicate or missing registry")
-            else:
-                    print("Successfully inserted")
+            print(f"Skipped for {formatted_time} - {args.tag_hash}. Already exists.")
+        return
+
+    sql = "INSERT INTO location_data (time, hashed_key, latitude, longitude, accuracy, battery, confidence) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    val = (formatted_time, args.tag_hash, entry["latitude"], entry["longitude"], entry["accuracy"], entry["battery"], entry["confidence"])
+    
+    try:
+        cursor.execute(sql, val)
+        my_database.commit()
+        if verbose:
+            print("Successfully inserted")
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         
