@@ -26,15 +26,29 @@ my_database = mysql.connector.connect(
 cursor = my_database.cursor()
 
 if verbose:
-    print(f"Inserting hash {args.tag_hash} with name {args.name} ...")
+    print(f"Checking if tag {args.name} with hash {args.tag_hash} already exists...")
 
-sql = "INSERT INTO tags (name, hashed_key) VALUES (%s, %s)"
-val = (args.name, args.tag_hash)
+# Check if tag already exists by name or hash
+check_sql = "SELECT id FROM tags WHERE name = %s OR hashed_key = %s"
+check_val = (args.name, args.tag_hash)
 
 try:
-    cursor.execute(sql,val)
-    my_database.commit()
-    if verbose:
-        print("Success!")
+    cursor.execute(check_sql, check_val)
+    existing_tag = cursor.fetchone()
+    
+    if existing_tag:
+        if verbose:
+            print(f"Tag already exists with id {existing_tag[0]}. Ignoring.")
+    else:
+        if verbose:
+            print(f"Inserting hash {args.tag_hash} with name {args.name} ...")
+        
+        sql = "INSERT INTO tags (name, hashed_key) VALUES (%s, %s)"
+        val = (args.name, args.tag_hash)
+        cursor.execute(sql, val)
+        my_database.commit()
+        if verbose:
+            print("Success!")
+            
 except mysql.connector.Error as e:
     print(f"Error: {e}")
