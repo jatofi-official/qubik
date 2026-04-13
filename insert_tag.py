@@ -63,6 +63,11 @@ while len(stdin) > 0:
     json_found.insert(0,parsed_json)
     stdin = stdin.lstrip()
 
+if not json_found or (len(json_found) == 1 and isinstance(json_found[0], list) and len(json_found[0]) == 0):
+    if verbose:
+        print("JSON input is empty. Nothing to insert.")
+    sys.exit(0)
+
 if verbose:
     print(f"Read {len(json_found)} entries.")
     print("Inserting into database...")
