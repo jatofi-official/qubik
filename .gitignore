@@ -3,3 +3,4 @@ db.php
 db.txt
 text.txt
 .venv
+firmware/output/*
