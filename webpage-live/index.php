@@ -4,10 +4,7 @@ session_start();
 // This is a hastily vibecoded previewer, if everything works. Will not remain in prod.
 
 // --- 1. CONFIGURATION ---
-$db_host = 'localhost';
-$db_name = 'tag_tracker';
-$db_user = 'root';
-$db_pass = '';
+include "db.php";
 
 // SHA-256 hash for the password "admin123"
 $hardcoded_hash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
@@ -266,16 +263,6 @@ if (isset($_GET['action'])) {
                     mapLayers.push(polyline);
                 }
 
-                // Invisible larger clickable area
-                // const invisibleCircle = L.circleMarker(currentPoint, {
-                //     radius: 20,
-                //     fillColor: 'transparent',
-                //     color: 'transparent',
-                //     weight: 0,
-                //     fillOpacity: 0
-                // }).bindPopup(`Date: ${dayKey}<br>Time: ${loc.time}`).addTo(map);
-                // mapLayers.push(invisibleCircle);
-
                 // Visible GPS Dot
                 const circle = L.circleMarker(currentPoint, {
                     radius: 7,
@@ -284,6 +271,16 @@ if (isset($_GET['action'])) {
                     weight: 1,
                     fillOpacity: 0.9
                 }).addTo(map);
+
+                // Invisible larger clickable area
+                const invisibleCircle = L.circleMarker(currentPoint, {
+                    radius: 30,
+                    fillColor: 'transparent',
+                    color: 'transparent',
+                    weight: 0,
+                    fillOpacity: 0
+                }).bindPopup(`Date: ${dayKey}<br>Time: ${loc.time}`).addTo(map);
+                mapLayers.push(invisibleCircle);
                 
                 mapLayers.push(circle);
             }
