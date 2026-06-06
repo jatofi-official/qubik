@@ -15,9 +15,6 @@
 
 Every calculation later is done on this aggregated data
 ### Transport classification
-
-------WE ARE HERE------
-
 - Script for categorizing mode of travel
     * Will take in account speed and previous speed
 
@@ -26,6 +23,9 @@ Every calculation later is done on this aggregated data
     * Will process data time for all trackers in paralell.
     * Output will be:
         + Areas of interest (a tracker has spent some time on, multiple degrees)
+
+------WE ARE HERE------
+
         + Time trackers spent together
         + Meetings (trackers have likely met)
         + Close event (trackers were close to each other)
@@ -41,4 +41,10 @@ Every calculation later is done on this aggregated data
 ## Data analysis and visualisation
 - TODO
     
+- we will create a flask
+first a homepage for each tracker.
 
+- static information:
+    * days in operation
+    * clean vs dirty data count
+    * 

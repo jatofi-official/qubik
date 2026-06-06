@@ -46,7 +46,7 @@ if (isset($_GET['action'])) {
 
         if ($_GET['action'] === 'get_locations' && isset($_GET['key'])) {
             // Query the trips table with all its new calculated columns
-            $stmt = $pdo->prepare("SELECT latitude, longitude, time, velocity, distance, motion_state, time_spent, transport_mode FROM trips WHERE hashed_key = ? ORDER BY time ASC");
+            $stmt = $pdo->prepare("SELECT latitude, longitude, time, velocity, distance, motion_state, time_spent, transport_mode, elevation FROM trips WHERE hashed_key = ? ORDER BY time ASC");
             $stmt->execute([$_GET['key']]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             exit;
@@ -373,10 +373,12 @@ if (isset($_GET['action'])) {
                 const velocity = loc.velocity !== null ? parseFloat(loc.velocity).toFixed(2) + ' km/h' : 'N/A';
                 const distance = loc.distance !== null ? parseFloat(loc.distance).toFixed(2) + ' m' : 'N/A';
                 const timeSpent = loc.time_spent !== null ? parseFloat(loc.time_spent/60).toFixed(2) + ' hours' : 'N/A';
+                const elevation = loc.elevation !== null ? parseFloat(loc.elevation).toFixed(2) + ' m' : 'N/A';
+
 
                 // Invisible larger clickable area for tooltips
                 const invisibleCircle = L.circleMarker(currentPoint, { radius: 25, fillColor: 'transparent', color: 'transparent', weight: 0, fillOpacity: 0 })
-                    .bindPopup(`Time: ${loc.time}<br>State: <b>${loc.motion_state}</b><br>Mode: <b>${loc.transport_mode}</b><br>Velocity: ${velocity}<br>Distance: ${distance}<br>Time Spent: ${timeSpent}`).addTo(map);
+                    .bindPopup(`Time: ${loc.time}<br>State: <b>${loc.motion_state}</b><br>Mode: <b>${loc.transport_mode}</b><br>Velocity: ${velocity}<br>Distance: ${distance}<br>Time Spent: ${timeSpent}<br>Elevation: ${elevation}`).addTo(map);
                 
                 mapLayers.push(invisibleCircle);
                 mapLayers.push(circle);

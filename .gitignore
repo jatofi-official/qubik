@@ -6,3 +6,5 @@ text.txt
 firmware/output/*
 
 topography_resources/*
+
+__pycache__
