@@ -128,7 +128,7 @@ def generate_trips():
                 transport_mode = "STATIONARY"
                 time_spent = delta_seconds / 60
                 
-                # Try to match with existing stationary clusters
+                # Try to match with existing stationary clusters. I am proud that this works really well:D
                 matched_cluster = None
                 min_dist = STATIONARY_MERGE_RADIUS
                 

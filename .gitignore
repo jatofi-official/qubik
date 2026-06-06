@@ -4,3 +4,5 @@ db.txt
 text.txt
 .venv
 firmware/output/*
+
+topography_resources/*
