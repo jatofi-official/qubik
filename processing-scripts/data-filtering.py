@@ -7,6 +7,7 @@ import datetime
 parser = argparse.ArgumentParser(add_help=True, description="Script used for inserting locations of a single tag into database. Expects data in json format.")
 parser.add_argument("--verbose", "-v", action ="store_true", help="Prints more information. Used for manual testing.")
 parser.add_argument("-sqlite", default="../largeDB.db", help="Name of sqlite .db file.")
+parser.add_argument("--debug", "-d", action ="store_true", help="Prints even more information. Used for debugging.")
 
 # Parsing arguments
 args = parser.parse_args()
@@ -28,7 +29,7 @@ MINIMUM_STATIC_SCORE = 1600
 DISTANCE_MERGE = 150
 
 # PARAMETERS
-debug = True
+debug = args.debug
 
 
 #   COLORS FOR OUTPUT
@@ -65,6 +66,12 @@ def get_distance(point1, point2):
 
     return round(R * c * 1000) #We can safely round this, the accuracy won't be affected at all
 
+def get_time_difference(old, new):
+    new_time = datetime.datetime.strptime(new[1], "%Y-%m-%d %H:%M:%S")
+    old_time = datetime.datetime.strptime(old[1], "%Y-%m-%d %H:%M:%S")
+    return new_time - old_time
+
+
 def insert_clean_point(row):
     if verbose:
         print("Inserting clean point.")
@@ -72,151 +79,12 @@ def insert_clean_point(row):
     
     sqlite_cursor.execute(import_sql, row)
 
-def handle_key(key):
-    if verbose:
-        pretty_print(bcolors.BOLD,f"\n=== Getting location_data for key {key} ===")
 
-    get_sql = "SELECT * FROM location_data WHERE hashed_key = ? ORDER BY time ASC"
-    sqlite_cursor.execute(get_sql, (key,))
-    location_data = sqlite_cursor.fetchall()
+def add_point(previous, new):
+    distance = get_distance(previous, new)
+    if distance < DISTANCE_MERGE:
+        insert_clean_point([new[0], new[1], new[2], new[3], 0, 0, "STATIONARY", ])
 
-    if len(location_data) == 0:
-        if verbose:
-            print("Found no location data")
-        return False
-
-    previous_time = datetime.datetime.strptime(location_data[0][1], "%Y-%m-%d %H:%M:%S")
-    # Delta time calculation
-
-    anchor = None
-    
-    i = 0
-    while i < len(location_data):
-        row = location_data[i]
-
-        group = [row]
-        
-        s_time = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
-        skip = 0
-
-        group_condition = True
-        while group_condition and (i + skip + 1) < len(location_data):
-            current_time = datetime.datetime.strptime(location_data[i+skip+1][1], "%Y-%m-%d %H:%M:%S")
-            difference = current_time - s_time
-            if difference > WINDOW_TIME:
-                group_condition = False
-            else:
-                group.append(location_data[i+skip+1])
-                skip += 1
-        
-        current_time = s_time
-
-        # Choose new initial anchor
-        if current_time - previous_time > IDLE_GAP or anchor is None:
-            anchor =  None
-            if debug:
-                pretty_print(bcolors.CYAN,f"IDLE ACTIVATED, {current_time - previous_time}, group size: {len(group)}")
-            
-            scores = []
-            for current_point in group:
-                score = CONFIDENCE_MULTIPLIER * current_point[6] - ACCURACY_MULTIPLIER * current_point[5]
-                scores.append((current_point, score))
-                if debug:
-                    print(f"Confidence: {current_point[6]}, Accuracy: {current_point[5]}, Score: {score}")
-
-            best = max(scores, key=lambda x: x[1])
-            if best[1] > MINIMUM_STATIC_SCORE:
-                anchor = best[0]
-                # We insert null velocity or distance, initial state and -1 as a marker for time spent here
-                insert_clean_point([best[0][1], best[0][2], best[0][3], best[0][4], None, None,"INIT", None]) 
-                
-                if debug:
-                    pretty_print(bcolors.GREEN,f"New anchor: {best}")
-            else:
-                if debug:
-                    pretty_print(bcolors.RED,"No new anchor chosen")
-
-        # Choosing next point
-        else:
-
-            found = False
-
-            for c in group:
-                # We automatically take one with confidence 3
-                if c[6] == 3:
-                    # We have found the next point.
-                    distance = get_distance((anchor[3], anchor[4]), (c[3], c[4]))
-                    c_time = datetime.datetime.strptime(c[1], "%Y-%m-%d %H:%M:%S")
-                    anchor_time = datetime.datetime.strptime(anchor[1], "%Y-%m-%d %H:%M:%S")
-                    delta_seconds = (c_time - anchor_time).total_seconds()
-
-                    if distance < DISTANCE_MERGE:
-                        delta_minutes = delta_seconds / 60
-                        insert_clean_point([c[1], c[2], c[3], c[4], 0, 0, "STATIONARY", delta_minutes]) 
-                    else:
-                        velocity_kmh = (distance / 1000) / (delta_seconds / 3600)
-                        insert_clean_point([c[1], c[2], c[3], c[4], velocity_kmh, distance, "MOVING", 0]) 
-
-                    anchor = c
-                    found = True
-                    break
-
-            # We have to calculate groups until we get one with a point with confidence 3
-            if not found:
-                groups = [group]
-                end = None
-
-                # Creating groups
-                while True:
-                    skip2 = 0
-                    if i + skip + skip2 + 1 >= len(location_data):
-                        break
-
-                    group = [location_data[i + skip]]
-                    s_time = datetime.datetime.strptime(location_data[i + skip][1], "%Y-%m-%d %H:%M:%S")
-
-
-                    group_condition = True
-
-                    
-                    while group_condition and (i + skip + skip2 + 1) < len(location_data):
-                        current_point = location_data[i + skip + skip2 + 1]
-                        current_time = datetime.datetime.strptime(current_point[1], "%Y-%m-%d %H:%M:%S")
-                        difference = current_time - s_time
-
-                        if current_point[6] == 3:
-                            found = True
-                            end = current_point
-
-                        if difference > WINDOW_TIME:
-                            group_condition = False
-                        else:
-                            group.append(current_point)
-                            skip2 += 1
-
-
-                    skip += skip2
-                    if found or (i + skip + skip2 + 1) >= len(location_data):
-                        break
-                    else:
-                        groups.append(group)
-                        s_time = current_time
-                    
-                # Processing groups
-                # TODO implement later
-                start = anchor
-                # end is the first confidence ==3 point. Here we edit the points and run dijkstra
-
-                
-        if (i + skip + 1) < len(location_data):
-            previous_time = current_time
-
-
-        i += 1 + skip
-
-    # sqlite_connection.commit()
-
-    return True
 
 def handle_key_fixed(key):
     if verbose:
@@ -264,7 +132,7 @@ def handle_key_fixed(key):
                     skip += 1
 
             if debug:
-                pretty_print(bcolors.CYAN, f"IDLE ACTIVATED, {current_time - previous_time}, group size: {len(group)}")
+                pretty_print(bcolors.CYAN, f"i = {i}, IDLE ACTIVATED, {current_time - previous_time}, group size: {len(group)}")
             
             # We try to choose the next anchor, one with best score above threshold
             scores = []
@@ -294,12 +162,89 @@ def handle_key_fixed(key):
                 previous_time = current_time
                 i += skip 
         
-        # There is no gap, we choose next point
+        # There is no gap, we have an anchor, we choose the next points
+        # Note: this part was especially difficult, I did write the code myself, I debugged it with the help of AI.
         else:
-            # Placeholder for your standard rolling kinematic window block (Choosing next point)
-            # This handles when there is an active anchor and no idle gap
-            pass
-            i += 1
+            if debug:
+                pretty_print(bcolors.HEADER, f"i = {i}, FINDING NEXT POINTS")
+            found = False            
+
+            # We have to calculate groups until we get one with a point with confidence 3
+            groups = []
+            end_point = None
+
+            # Creating groups
+            while i < len(location_data) and not found:
+                row = location_data[i]
+                window_base_time = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
+
+                group = []
+                skip = 0
+
+                group_condition = True
+                while group_condition and (i + skip) < len(location_data):
+                    point = location_data[i + skip]
+                    point_time = datetime.datetime.strptime(point[1], "%Y-%m-%d %H:%M:%S")
+
+                    # FIX: Measure window separation relative to the start of THIS specific group
+                    if (point_time - window_base_time) > WINDOW_TIME:
+                        group_condition = False
+                    else:
+                        group.append(point)
+                        
+                        # FIX: Check milestone state natively inside the valid window cluster
+                        if point[6] == 3:
+                            found = True
+                            end_point = point
+
+                            if debug:
+                                pretty_print(bcolors.GREEN, f"Found anchor at i = {i}, skipping: {skip}, time: {point[1]}")
+                            # We stop adding more points to this window bucket once ground truth is hit
+                            skip += 1
+                            break
+                        
+                        skip += 1
+
+                if found:
+                    i += skip
+                    break
+                else:
+                    groups.append(group)
+                    i += skip
+
+                # If we didn't find any confidence 3 point, we choose the final endpoint as the best point from the last group. 
+                if i >= len(location_data):
+                    if groups:
+                        fallback_group = groups.pop()
+                        scores = []
+                        for point in fallback_group:
+                            score = CONFIDENCE_MULTIPLIER * point[6] - ACCURACY_MULTIPLIER * point[5]
+                            scores.append((point, score))
+                        
+                        best_fallback = max(scores, key=lambda x: x[1])
+                        end_point = best_fallback[0]
+                        
+                        break
+
+            
+                
+            # Processing groups
+            # TODO implement later
+
+            if debug:
+                print(f"GROUPS: {len(groups)} ")
+
+            # We found the next anchor in the right next window. We just add it.
+            if len(groups) ==0:
+                anchor = end_point
+                previous_time = datetime.datetime.strptime(anchor[1], "%Y-%m-%d %H:%M:%S")
+            else:
+                start_point = anchor
+
+            
+            # end is the first confidence ==3 point. Here we edit the points and run dijkstra
+
+
 
     return True
 
