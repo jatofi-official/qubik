@@ -21,7 +21,7 @@ sqlite_cursor = sqlite_connection.cursor()
 
 # CONSTANTS
 WINDOW_TIME = datetime.timedelta(minutes=1)
-IDLE_GAP = datetime.timedelta(hours=2)
+IDLE_GAP = datetime.timedelta(hours=1)
 
 CONFIDENCE_MULTIPLIER = 1000
 ACCURACY_MULTIPLIER = 1
@@ -123,14 +123,15 @@ def insert_clean_point(row):
 def add_point(previous, new):
     distance = get_distance((previous[3], previous[4]), (new[3], new[4]))
     delta_seconds = get_time_difference(previous, new).total_seconds()
+    velocity_kmh = (distance / 1000) / (delta_seconds / 3600) if delta_seconds > 0 else 0
 
-    if distance < DISTANCE_MERGE:
-        insert_clean_point([new[1], new[2], new[3], new[4], 0, 0, "STATIONARY", delta_seconds / 60])
-    elif get_time_difference(previous, new) >= IDLE_GAP:
-        insert_clean_point([new[1], new[2], new[3], new[4], None, None, "INIT", None]) 
+
+    if get_time_difference(previous, new) >= IDLE_GAP:
+        insert_clean_point([new[1], new[2], new[3], new[4], velocity_kmh, distance, "INIT", None]) 
+    elif abs(distance) < DISTANCE_MERGE:
+        insert_clean_point([new[1], new[2], new[3], new[4], velocity_kmh, distance, "STATIONARY", delta_seconds / 60])
 
     else:
-        velocity_kmh = (distance / 1000) / (delta_seconds / 3600)
         if velocity_kmh > VELOCITY_CUTOFF_KMH:
             return
         insert_clean_point([new[1], new[2], new[3], new[4], velocity_kmh, distance, "MOVING", 0])
@@ -155,10 +156,6 @@ def handle_key_fixed(key):
     anchor = None
     i = 0
     while i < len(location_data):
-        # DEBUG
-        # if debug:
-        #     if i>200:
-        #         break
 
         row = location_data[i]
         current_time = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
