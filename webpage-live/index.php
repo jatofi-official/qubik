@@ -47,7 +47,7 @@ if (isset($_GET['action'])) {
 
         if ($_GET['action'] === 'get_locations' && isset($_GET['key'])) {
             $minConfidence = isset($_GET['confidence']) ? intval($_GET['confidence']) : 1;
-            $stmt = $pdo->prepare("SELECT latitude, longitude, time FROM location_data WHERE hashed_key = ? AND confidence >= ? ORDER BY time ASC");
+            $stmt = $pdo->prepare("SELECT latitude, longitude, time, accuracy, confidence FROM location_data WHERE hashed_key = ? AND confidence >= ? ORDER BY time ASC");
             $stmt->execute([$_GET['key'], $minConfidence]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             exit;
@@ -272,6 +272,10 @@ if (isset($_GET['action'])) {
                     fillOpacity: 0.9
                 }).addTo(map);
 
+                const confidence = loc.confidence;
+                const accuracy = loc.accuracy;
+                const score = (1000 * confidence) - accuracy;
+
                 // Invisible larger clickable area
                 const invisibleCircle = L.circleMarker(currentPoint, {
                     radius: 30,
@@ -279,7 +283,7 @@ if (isset($_GET['action'])) {
                     color: 'transparent',
                     weight: 0,
                     fillOpacity: 0
-                }).bindPopup(`Date: ${dayKey}<br>Time: ${loc.time}`).addTo(map);
+                }).bindPopup(`Time: ${loc.time}<br>Confidence: ${confidence}<br>Accuracy: ${accuracy}<br>Score: ${score}`).addTo(map);
                 mapLayers.push(invisibleCircle);
                 
                 mapLayers.push(circle);
