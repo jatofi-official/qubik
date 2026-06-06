@@ -1,0 +1,7 @@
+## Used commands:
+
+sqlite3 largeDB.db < create_database_sqlite.sql 
+
+python mysql-to-sqlite-dump.py "root" "" -v
+
+sqlite3 ../largeDB.db "DELETE FROM location_data"
