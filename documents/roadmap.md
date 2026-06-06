@@ -2,11 +2,14 @@
 
 ## Data processing
 - Python script for extracting data from MySQL to Sqlite3
+
+------WE ARE HERE------
+
 - Data filtering
     * For each tracker separately, by time pings (aggregates data from one ping in a 1 minute window)
-    * Automatically calculates velocity and groups trackers by location
+    * Automatically calculates velocity, distance, time spent on place and groups trackers by location
     * Sliding window, judging algorithm based on confidence and relative velocity
-    * Result will be a table which adds columns velocity (from previous to current) and time spent on a place
+    * Result will be a table which adds columns velocity (from previous to current), time spent on a place and distance
 
 Every calculation later is done on this aggregated data
 ### Transport classification
