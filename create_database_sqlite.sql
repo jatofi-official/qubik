@@ -29,7 +29,6 @@ CREATE TABLE clean_location_data (
     distance REAL,
     motion_state TEXT,
     time_spent_here INTEGER,
-    cluster_id TEXT,
 
     FOREIGN KEY (hashed_key) REFERENCES tags(hashed_key),
     UNIQUE (time, hashed_key)
