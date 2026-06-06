@@ -131,12 +131,19 @@ if (isset($_GET['action'])) {
                 <option value="30d">Last 30 Days</option>
                 <option value="all" selected>All Time</option>
                 <option value="custom">Custom Range</option>
+                <option value="day">Single Day</option>
             </select>
 
             <div id="custom-date-range" style="display: none; align-items: center; gap: 5px; margin-left: 10px;">
                 <input type="datetime-local" id="start-date" onchange="loadMapData()" style="padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
                 <span>to</span>
                 <input type="datetime-local" id="end-date" onchange="loadMapData()" style="padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
+            </div>
+
+            <div id="single-day-controls" style="display: none; align-items: center; gap: 5px; margin-left: 10px;">
+                <button id="prev-day-btn" onclick="changeDay(-1)" style="padding: 6px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff;">&#8592; Prev</button>
+                <input type="date" id="single-date" onchange="loadMapData()" style="padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
+                <button id="next-day-btn" onclick="changeDay(1)" style="padding: 6px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff;">Next &#8594;</button>
             </div>
 
             <label id="significance-label" for="significance-input" style="margin-left: 20px; display: none;"><strong>Min Significance:</strong></label>
@@ -202,6 +209,9 @@ if (isset($_GET['action'])) {
                 document.getElementById('time-scale').disabled = false;
                 document.getElementById('start-date').disabled = false;
                 document.getElementById('end-date').disabled = false;
+                document.getElementById('single-date').disabled = false;
+                document.getElementById('prev-day-btn').disabled = false;
+                document.getElementById('next-day-btn').disabled = false;
                 document.getElementById('legend-trips').style.display = 'flex';
                 document.getElementById('legend-places').style.display = 'none';
                 document.getElementById('significance-label').style.display = 'none';
@@ -213,6 +223,9 @@ if (isset($_GET['action'])) {
                 document.getElementById('time-scale').disabled = true;
                 document.getElementById('start-date').disabled = true;
                 document.getElementById('end-date').disabled = true;
+                document.getElementById('single-date').disabled = true;
+                document.getElementById('prev-day-btn').disabled = true;
+                document.getElementById('next-day-btn').disabled = true;
                 document.getElementById('legend-trips').style.display = 'none';
                 document.getElementById('legend-places').style.display = 'flex';
                 document.getElementById('significance-label').style.display = 'inline';
@@ -225,11 +238,41 @@ if (isset($_GET['action'])) {
         function handleTimeScaleChange() {
             const timeScale = document.getElementById('time-scale').value;
             const customRangeDiv = document.getElementById('custom-date-range');
+            const singleDayDiv = document.getElementById('single-day-controls');
+
             if (timeScale === 'custom') {
                 customRangeDiv.style.display = 'flex';
             } else {
                 customRangeDiv.style.display = 'none';
             }
+
+            if (timeScale === 'day') {
+                singleDayDiv.style.display = 'flex';
+                if (!document.getElementById('single-date').value) {
+                    document.getElementById('single-date').value = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                singleDayDiv.style.display = 'none';
+            }
+
+            loadMapData();
+        }
+
+        function changeDay(offset) {
+            const dateInput = document.getElementById('single-date');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            
+            const parts = dateInput.value.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            d.setDate(d.getDate() + offset);
+            
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            
             loadMapData();
         }
 
@@ -274,6 +317,12 @@ if (isset($_GET['action'])) {
                     if (startInput) startDate = new Date(startInput);
                     if (endInput) endDate = new Date(endInput);
                     break;
+                case 'day':
+                    const singleDateVal = document.getElementById('single-date').value;
+                    if (singleDateVal) {
+                        return locations.filter(loc => loc.time.startsWith(singleDateVal));
+                    }
+                    break;
                 case 'all': default: return locations;
             }
             return locations.filter(loc => {
@@ -299,7 +348,7 @@ if (isset($_GET['action'])) {
             mapLayers = [];
 
             if (locations.length === 0) {
-                alert("No trips found for this tracker in the selected time period.");
+                // alert("No trips found for this tracker in the selected time period.");
                 return;
             }
 
