@@ -21,7 +21,7 @@ sqlite_cursor = sqlite_connection.cursor()
 
 # CONSTANTS
 WINDOW_TIME = datetime.timedelta(minutes=1)
-IDLE_GAP = datetime.timedelta(minutes=30)
+IDLE_GAP = datetime.timedelta(hours=2)
 
 CONFIDENCE_MULTIPLIER = 1000
 ACCURACY_MULTIPLIER = 1
@@ -32,12 +32,14 @@ DISTANCE_MERGE = 150
 
 # Graph constants
 VELOCITY_CUTOFF_KMH = 160
-ANGLE_PENALTY_CUTOFF = 120
-TURN_PENALTY_MULTIPLIER = 150
+ANGLE_PENALTY_CUTOFF = 130
+TURN_PENALTY_MULTIPLIER = 2
 
-ANGLE_CUTOFF = 140
-VELOCITY_ANGLE_CUTOFF = 60
-DISTANCE_MULTIPLIER = 5
+ANGLE_CUTOFF = 160
+VELOCITY_ANGLE_CUTOFF = 120
+DISTANCE_MULTIPLIER = 2
+
+MIN_GOOD = 3
 
 
 # PARAMETERS
@@ -113,8 +115,6 @@ def get_bearing(coord1, coord2):
 
 
 def insert_clean_point(row):
-    if verbose:
-        print("Inserting clean point.")
     import_sql = "INSERT INTO clean_location_data (time, hashed_key, latitude, longitude, velocity, distance, motion_state, time_spent_here) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     
     sqlite_cursor.execute(import_sql, row)
@@ -126,8 +126,13 @@ def add_point(previous, new):
 
     if distance < DISTANCE_MERGE:
         insert_clean_point([new[1], new[2], new[3], new[4], 0, 0, "STATIONARY", delta_seconds / 60])
+    elif get_time_difference(previous, new) >= IDLE_GAP:
+        insert_clean_point([new[1], new[2], new[3], new[4], None, None, "INIT", None]) 
+
     else:
-        velocity_kmh = (distance / 1000) / (delta_seconds / 3600) if delta_seconds > 0 else 0
+        velocity_kmh = (distance / 1000) / (delta_seconds / 3600)
+        if velocity_kmh > VELOCITY_CUTOFF_KMH:
+            return
         insert_clean_point([new[1], new[2], new[3], new[4], velocity_kmh, distance, "MOVING", 0])
 
 
@@ -239,7 +244,7 @@ def handle_key_fixed(key):
                         group.append(point)
                         
                         # FIX: Check milestone state natively inside the valid window cluster
-                        if point[6] == 3:
+                        if point[6] == MIN_GOOD:
                             found = True
                             end_point = point
 
@@ -317,6 +322,33 @@ def handle_key_fixed(key):
                     print("Finding optimal path...")
                 result_ids = dijkstra_shortest_path(dijkstra_graph, start_point[0], end_point[0])
 
+                # If there is no path, we add the start and end point directly.
+                if not result_ids or len(result_ids) == 0:
+                    if debug:
+                        pretty_print(bcolors.ORANGE, "Dijkstra failed to find a valid track. Applying fallback bridge.")
+                    add_point(start_point, end_point)
+                
+                else:
+                    # We create a dictionary to look up row data by its ID
+                    id_to_row = {start_point[0]: start_point, end_point[0]: end_point}
+                    for group in groups:
+                        for point in group:
+                            id_to_row[point[0]] = point
+                    
+                    # Add the points sequentially
+                    for step in range(len(result_ids) - 1):
+                        prev_point = id_to_row[result_ids[step]]
+                        next_point = id_to_row[result_ids[step + 1]]
+                        add_point(prev_point, next_point)
+
+
+                # Update the anchor for the next loop
+                anchor = end_point
+                previous_time = datetime.datetime.strptime(anchor[1], "%Y-%m-%d %H:%M:%S")
+
+    # Save all the inserted points to the database
+    sqlite_connection.commit()
+
 
             
 
@@ -367,12 +399,14 @@ def build_layered_graph(start_point, groups, end_point):
                 is_impossible_u_turn = False
 
                 if node_a_id in parent_map and len(parent_map[node_a_id]) > 0:
-                    # Calculate the outgoing bearing from A -> B
+                    # Calculate the outgoing bearing from A to B
                     bearing_out = get_bearing(node_a_coords, node_b_coords)
+
+                    valid_parent_angles = 0
                     
                     for parent_node in parent_map[node_a_id]:
                         parent_coords = (parent_node[3], parent_node[4])
-                        # Calculate the incoming bearing from Parent -> A
+                        # Calculate the incoming bearing from Parent to A
                         bearing_in = get_bearing(parent_coords, node_a_coords)
                         
                         # Calculate the absolute difference between the angles
@@ -380,15 +414,17 @@ def build_layered_graph(start_point, groups, end_point):
                         if angle_diff > 180:
                             angle_diff = 360 - angle_diff
 
-                        # If the turn angle is extremely sharp (e.g., > 140 degrees) 
-                        # AND the velocity is high, it's a ghost-ping zigzag pattern
-                        if angle_diff > ANGLE_CUTOFF and velocity_kmh > VELOCITY_ANGLE_CUTOFF:
-                            is_impossible_u_turn = True
-                            break
+                        # Check if this specific parent path is smooth
+                        if not (angle_diff > ANGLE_CUTOFF and velocity_kmh > VELOCITY_ANGLE_CUTOFF):
+                            valid_parent_angles += 1
                         
-                        # Apply a rolling penalty for softer, but unnatural bends
                         if angle_diff > ANGLE_PENALTY_CUTOFF:
                             turn_penalty = max(turn_penalty, (angle_diff - ANGLE_PENALTY_CUTOFF) * TURN_PENALTY_MULTIPLIER)
+
+                    # Only kill the edge if EVERY single historical entry path requires a severe U-turn
+                    if valid_parent_angles == 0 and len(parent_map[node_a_id]) > 0:
+                        is_impossible_u_turn = True        
+
                 if is_impossible_u_turn:
                     continue
 
@@ -483,8 +519,9 @@ def filter_location_data():
     for key in tag_keys:
         if key[0] != "":
             result = handle_key_fixed(key[0])
-            if result:
-                break
+            
+            # if result:
+            #     break
 
 
     if verbose:
