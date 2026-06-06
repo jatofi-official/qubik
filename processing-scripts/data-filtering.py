@@ -64,6 +64,8 @@ def get_distance(point1, point2):
     return round(R * c * 1000) #We can safely round this, the accuracy won't be affected at all
 
 def insert_clean_point(row):
+    if verbose:
+        print("Inserting clean point.")
     import_sql = "INSERT INTO clean_location_data (time, hashed_key, latitude, longitude, velocity, distance, motion_state, time_spent_here) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     
     sqlite_cursor.execute(import_sql, row)
@@ -123,8 +125,8 @@ def handle_key(key):
             best = max(scores, key=lambda x: x[1])
             if best[1] > MINIMUM_STATIC_SCORE:
                 anchor = best[0]
-                # We insert no velocity or distance, initial state and -1 as a marker for time spent here
-                insert_clean_point([best[0][1], best[0][2], best[0][3], best[0][4], 0, 0,"INIT", -1]) 
+                # We insert null velocity or distance, initial state and -1 as a marker for time spent here
+                insert_clean_point([best[0][1], best[0][2], best[0][3], best[0][4], None, None,"INIT", None]) 
                 
                 if debug:
                     pretty_print(bcolors.GREEN,f"New anchor: {best}")
@@ -164,8 +166,8 @@ def filter_location_data():
     for key in tag_keys:
         if key[0] != "":
             result = handle_key(key[0])
-            # if result:
-            #     break
+            if result:
+                break
 
 
     if verbose:
