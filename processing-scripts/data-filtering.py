@@ -40,6 +40,22 @@ VELOCITY_ANGLE_CUTOFF = 120
 DISTANCE_MULTIPLIER = 2
 
 MIN_GOOD = 3
+CLEAN_TABLE_SQL = '''
+CREATE TABLE IF NOT EXISTS clean_location_data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    time TEXT NOT NULL,
+    hashed_key TEXT,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    velocity REAL,
+    distance REAL,
+    motion_state TEXT,
+    time_spent_here INTEGER,
+
+    FOREIGN KEY (hashed_key) REFERENCES tags(hashed_key),
+    UNIQUE (time, hashed_key)
+);
+'''
 
 
 # PARAMETERS
@@ -60,6 +76,13 @@ class bcolors:
 
 def pretty_print(color, message):
     print(color + message + bcolors.ENDC)
+
+
+def initialize_table():
+    pretty_print(bcolors.HEADER, f"Creating table 'clean_location_data'...")
+
+    sqlite_cursor.execute(CLEAN_TABLE_SQL)
+    sqlite_cursor.execute(f"DELETE FROM clean_location_data")
 
 
 # I found this snippet. We do not need geodesic distance, it is too expensive and 
@@ -314,7 +337,7 @@ def handle_key_fixed(key):
 
                 dijkstra_graph = build_layered_graph(start_point, groups, end_point)
 
-                if verbose:
+                if debug:
                     print("Finding optimal path...")
                 result_ids = dijkstra_shortest_path(dijkstra_graph, start_point[0], end_point[0])
 
@@ -501,16 +524,17 @@ def dijkstra_shortest_path(graph, start_node, end_node):
 
 
 def filter_location_data():
+    initialize_table()
 
     if verbose:
-        print("=== Getting tag keys from sqlite database ===")
+        pretty_print(bcolors.HEADER, "=== Getting tag keys from sqlite database ===")
 
     tags_sql = "SELECT hashed_key FROM tags"
     sqlite_cursor.execute(tags_sql)
     tag_keys = sqlite_cursor.fetchall()
 
     if verbose:
-        print(f"Found {len(tag_keys)} tags")
+        pretty_print(bcolors.HEADER, f"Found {len(tag_keys)} tags")
 
     for key in tag_keys:
         if key[0] != "":
@@ -521,7 +545,7 @@ def filter_location_data():
 
 
     if verbose:
-        print("Done!")
+        pretty_print(bcolors.GREEN,"Done!")
 
 
 filter_location_data()

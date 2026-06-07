@@ -18,18 +18,3 @@ CREATE TABLE location_data (
     FOREIGN KEY (hashed_key) REFERENCES tags(hashed_key),
     UNIQUE (time, hashed_key)
 );
-
-CREATE TABLE clean_location_data (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    time TEXT NOT NULL,
-    hashed_key TEXT,
-    latitude REAL NOT NULL,
-    longitude REAL NOT NULL,
-    velocity REAL,
-    distance REAL,
-    motion_state TEXT,
-    time_spent_here INTEGER,
-
-    FOREIGN KEY (hashed_key) REFERENCES tags(hashed_key),
-    UNIQUE (time, hashed_key)
-);

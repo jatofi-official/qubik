@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker analysis - Home</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --top-panel-bg: #0f172a;
+            --top-panel-text: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            
+            /* Module Colors */
+            --overview: #a855f7;       /* Purple */
+            --overview-light: #f3e8ff;
+            --overview-hover: #faf5ff;
+            
+            --primary: #3b82f6;        /* Blue */
+            --primary-light: #eff6ff;
+            --primary-hover: #f0f9ff;
+            
+            --success: #10b981;        /* Green */
+            --success-light: #ecfdf5;
+            --success-hover: #f0fdf4;
+            
+            --border-radius: 12px;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* ================= TOP PANEL ================= */
+        .top-panel {
+            background-color: var(--top-panel-bg);
+            color: var(--top-panel-text);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .top-panel-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            padding: 6px 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 20px;
+        }
+
+        .top-panel h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .top-panel p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ================= MAIN CONTENT CONTAINER ================= */
+        .main-container {
+            max-width: 1200px;
+            margin: 40px auto; /* Clearly separated from the top panel */
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* --- 3-Column Action Grid --- */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .action-btn {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hover states for specific modules */
+        .action-btn.overview:hover { border-color: var(--overview); background-color: var(--overview-hover); }
+        .action-btn.individual:hover { border-color: var(--primary); background-color: var(--primary-hover); }
+        .action-btn.social:hover { border-color: var(--success); background-color: var(--success-hover); }
+
+        .action-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .overview .action-icon { background-color: var(--overview-light); color: var(--overview); }
+        .individual .action-icon { background-color: var(--primary-light); color: var(--primary); }
+        .social .action-icon { background-color: var(--success-light); color: var(--success); }
+
+        .action-text {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .action-text h3 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .action-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .action-arrow {
+            margin-top: 4px;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .action-btn:hover .action-arrow { transform: translateX(4px); }
+        .action-btn.overview:hover .action-arrow { color: var(--overview); }
+        .action-btn.individual:hover .action-arrow { color: var(--primary); }
+        .action-btn.social:hover .action-arrow { color: var(--success); }
+
+        /* --- Quick Tracker Select (Under Individual) --- */
+        .quick-select-wrapper {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-select-wrapper select {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.85rem;
+        }
+
+        .quick-select-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* --- Bookmarks Section --- */
+        .bookmarks-section {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 32px;
+        }
+
+        .section-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bookmark-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bookmark-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: background 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .bookmark-item:hover { background-color: #f8fafc; }
+
+        .bm-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .bm-individual .bm-icon { background-color: var(--primary-light); color: var(--primary); }
+        .bm-social .bm-icon { background-color: var(--success-light); color: var(--success); }
+
+        .bm-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bm-name {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .bm-tag {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bm-date {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding-right: 20px;
+        }
+
+        .bm-type-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bm-individual .bm-type-badge { background-color: var(--primary-light); color: var(--primary); }
+        .bm-social .bm-type-badge { background-color: var(--success-light); color: var(--success); }
+
+        .bm-action {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .bookmark-item:hover .bm-action { color: var(--primary); }
+
+        @media (max-width: 900px) {
+            .action-grid { grid-template-columns: 1fr; }
+            .bookmark-item {
+                grid-template-columns: auto 1fr auto;
+                grid-template-rows: auto auto;
+            }
+            .bm-type-badge { display: none; }
+            .bm-date { grid-column: 2; grid-row: 2; padding: 0; margin-top: 8px; }
+            .bm-action { grid-column: 3; grid-row: 1 / span 2; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-panel">
+        <div class="top-panel-inner">
+            <div class="brand">
+                <i class="fa-solid fa-earth-europe"></i> tracker analysis
+            </div>
+            <h1>Welcome</h1>
+            <p>Select an analysis module below to begin exploring overviews, individual tracking assets, and social proximity networks.</p>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <div class="action-grid">
+            
+            <div>
+                <a href="#" class="action-btn overview">
+                    <div class="action-icon">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div class="action-text">
+                        <h3>Overview</h3>
+                        <p>General analysis, total active tags, global data quality and other statistics.</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right action-arrow"></i>
+                </a>
+            </div>
+
+            <div>
+                <a href="individual" class="action-btn individual">
+                    <div class="action-icon">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                    </div>
+                    <div class="action-text">
+                        <h3>Individual View</h3>
+                        <p>Daily route, velocity, elevation, and other metrics for a single tracking tag.</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right action-arrow"></i>
+                </a>
+            </div>
+
+            <div>
+                <a href="#" class="action-btn social">
+                    <div class="action-icon">
+                        <i class="fa-solid fa-circle-nodes"></i>
+                    </div>
+                    <div class="action-text">
+                        <h3>Social View</h3>
+                        <p>Daily route overlaps, meeting points, and relationships between multiple tags.</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right action-arrow"></i>
+                </a>
+            </div>
+
+        </div>
+
+        <section class="bookmarks-section">
+            <div class="section-header">
+                <i class="fa-solid fa-bookmark" style="color: var(--primary);"></i> 
+                Saved Bookmarks
+            </div>
+            
+            <div class="bookmark-list">
+                
+                <a href="#" class="bookmark-item bm-individual">
+                    <div class="bm-icon">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div class="bm-info">
+                        <div class="bm-name">Downtown Delivery Route Anomaly</div>
+                        <div class="bm-tag"><i class="fa-solid fa-hashtag"></i> Tag: 3nbbTczUGeECZYu...</div>
+                    </div>
+                    <div class="bm-type-badge">Individual</div>
+                    <div class="bm-date"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> 2026-06-02</div>
+                    <div class="bm-action"><i class="fa-solid fa-arrow-right"></i></div>
+                </a>
+
+                <a href="#" class="bookmark-item bm-social">
+                    <div class="bm-icon">
+                        <i class="fa-solid fa-people-arrows"></i>
+                    </div>
+                    <div class="bm-info">
+                        <div class="bm-name">Morning Fleet Convergence at Depot</div>
+                        <div class="bm-tag"><i class="fa-solid fa-layer-group"></i> 5 Tags Monitored</div>
+                    </div>
+                    <div class="bm-type-badge">Social View</div>
+                    <div class="bm-date"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> 2026-06-01</div>
+                    <div class="bm-action"><i class="fa-solid fa-arrow-right"></i></div>
+                </a>
+
+                <a href="#" class="bookmark-item bm-individual">
+                    <div class="bm-icon">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div class="bm-info">
+                        <div class="bm-name">High Elevation Cross-Country Record</div>
+                        <div class="bm-tag"><i class="fa-solid fa-hashtag"></i> Tag: 8xmnQweRtyABz...</div>
+                    </div>
+                    <div class="bm-type-badge">Individual</div>
+                    <div class="bm-date"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> 2026-05-28</div>
+                    <div class="bm-action"><i class="fa-solid fa-arrow-right"></i></div>
+                </a>
+
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>

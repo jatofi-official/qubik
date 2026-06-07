@@ -261,13 +261,13 @@ def generate_places():
     initialize_table("places", PLACES_TABLE_SQL)
 
     sqlite_cursor.execute(
-        "SELECT hashed_key, latitude, longitude, time_spent FROM trips WHERE motion_state = 'STATIONARY'",
+        "SELECT hashed_key, latitude, longitude, time_spent, time FROM trips WHERE motion_state = 'STATIONARY'",
     )
     stationary_trips = sqlite_cursor.fetchall()
 
     places_clusters = []
 
-    for key, lat, lon, time_spent in stationary_trips:
+    for key, lat, lon, time_spent, time in stationary_trips:
         if time_spent is None:
             time_spent = 0
 
@@ -299,6 +299,8 @@ def generate_places():
             )
 
     for cluster in places_clusters:
+        if verbose:
+            print("Inserting stationary cluster..")
         insert_place([
             cluster["lat"],
             cluster["lon"],

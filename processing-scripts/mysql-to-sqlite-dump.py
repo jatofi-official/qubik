@@ -70,8 +70,7 @@ def import_location_data():
     if verbose:
         print("Importing location_data to sqlite database...")
 
-    if verbose:
-        i = 1
+    i = 1
     for row in location_data:
         import_sql = "INSERT INTO location_data (id, time, hashed_key, latitude, longitude, accuracy, confidence) VALUES (?, ?, ?, ?, ?, ?, ?)"
         
