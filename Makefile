@@ -5,13 +5,15 @@ PASSWORD = ""
 DATABASE = tag_tracker
 HOST = localhost
 
-.PHONY: all pipeline clean deploy init-db
+.PHONY: all pipeline clean deploy create-db clean-pipeline-db
+
 
 all: pipeline deploy
 
 # Used for creating database if MySQL database is available
 create-db: clean $(DB_FILE)
 
+# DO NOT RUN WITHOUT MYSQL DATABASE
 clean:
 	rm -f $(DB_FILE)
 
@@ -19,7 +21,7 @@ $(DB_FILE):
 	sqlite3 $(DB_FILE) < create_database_sqlite.sql
 	python3 processing-scripts/mysql-to-sqlite-dump.py $(USER) $(PASSWORD) -database $(DATABASE) -host $(HOST) -sqlite $(DB_FILE) -v
 
-
+# Cleans the output of pipeline, does not delete critical data
 clean-pipeline-db:
 	sqlite3 $(DB_FILE) "DROP TABLE IF EXISTS clean_location_data, trips, places"
 
