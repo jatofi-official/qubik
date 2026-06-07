@@ -113,12 +113,19 @@ if (isset($_GET['action'])) {
             </select>
             
             <label for="time-scale" style="margin-left: 20px;"><strong>Time Scale:</strong></label>
-            <select id="time-scale" onchange="loadMapData()">
+            <select id="time-scale" onchange="handleTimeScaleChange()">
                 <option value="24h">Last 24 Hours</option>
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
                 <option value="all" selected>All Time</option>
+                <option value="day">Single Day</option>
             </select>
+            
+            <div id="single-day-controls" style="display: none; align-items: center; gap: 5px; margin-left: 10px;">
+                <button id="prev-day-btn" onclick="changeDay(-1)" style="padding: 6px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff;">&#8592; Prev</button>
+                <input type="date" id="single-date" onchange="loadMapData()" style="padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
+                <button id="next-day-btn" onclick="changeDay(1)" style="padding: 6px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff;">Next &#8594;</button>
+            </div>
             
             <label for="confidence" style="margin-left: 20px;"><strong>Min Confidence:</strong></label>
             <select id="confidence" onchange="loadMapData()">
@@ -170,6 +177,40 @@ if (isset($_GET['action'])) {
             }
         }
 
+        function handleTimeScaleChange() {
+            const timeScale = document.getElementById('time-scale').value;
+            const singleDayDiv = document.getElementById('single-day-controls');
+
+            if (timeScale === 'day') {
+                singleDayDiv.style.display = 'flex';
+                if (!document.getElementById('single-date').value) {
+                    document.getElementById('single-date').value = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                singleDayDiv.style.display = 'none';
+            }
+
+            loadMapData();
+        }
+
+        function changeDay(offset) {
+            const dateInput = document.getElementById('single-date');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            
+            const parts = dateInput.value.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            d.setDate(d.getDate() + offset);
+            
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            
+            loadMapData();
+        }
+
         async function loadMapData() {
             const tagKey = document.getElementById('tag-select').value;
             const timeScale = document.getElementById('time-scale').value;
@@ -202,6 +243,12 @@ if (isset($_GET['action'])) {
                 case '30d':
                     cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                     break;
+                case 'day':
+                    const singleDateVal = document.getElementById('single-date').value;
+                    if (singleDateVal) {
+                        return locations.filter(loc => loc.time.startsWith(singleDateVal));
+                    }
+                    return [];
                 case 'all':
                 default:
                     return locations;

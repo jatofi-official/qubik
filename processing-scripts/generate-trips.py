@@ -192,15 +192,16 @@ def generate_trips():
 
                 if current_stationary:
                     current_stationary["time"] = time_str
-                    current_stationary["lat"] = lat
-                    current_stationary["lon"] = lon
+                    c = current_stationary["count"]
+                    current_stationary["lat"] = ((current_stationary["lat"] * c) + row[3]) / (c + 1)
+                    current_stationary["lon"] = ((current_stationary["lon"] * c) + row[4]) / (c + 1)
                     current_stationary["time_spent"] += time_spent
                     current_stationary["count"] += 1
                 else:
                     current_stationary = {
                         "time": time_str,
-                        "lat": lat,
-                        "lon": lon,
+                        "lat": row[3],
+                        "lon": row[4],
                         "velocity": velocity,
                         "distance": distance,
                         "time_spent": time_spent,

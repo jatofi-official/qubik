@@ -249,7 +249,6 @@ def handle_key_fixed(key):
                                 pretty_print(bcolors.GREEN, f"Found anchor at i = {i}, skipping: {skip}, time: {point[1]}")
                             # We stop adding more points to this window bucket once ground truth is hit
                             skip += 1
-                            break
                         
                         skip += 1
 
