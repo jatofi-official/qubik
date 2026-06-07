@@ -138,7 +138,6 @@ def generate_trips():
         prev_row_data = None
         stationary_clusters = []
         current_stationary = None
-        last_anchor_time = None
 
         for row in location_data:
             time_str = row[1]
@@ -164,7 +163,6 @@ def generate_trips():
                 insert_trip([time_str, key, lat, lon, None, None, "INIT", 0, "UNKNOWN"])
 
                 prev_row_data = {"time": time_str, "lat": lat, "lon": lon}
-                last_anchor_time = time_str
                 continue
 
             delta_seconds = get_time_difference(prev_row_data["time"], time_str)
@@ -193,6 +191,7 @@ def generate_trips():
                     stationary_clusters.append({"lat": lat, "lon": lon, "count": 1})
 
                 if current_stationary:
+                    current_stationary["time"] = time_str
                     current_stationary["lat"] = lat
                     current_stationary["lon"] = lon
                     current_stationary["time_spent"] += time_spent
@@ -208,7 +207,6 @@ def generate_trips():
                         "count": 1,
                     }
 
-                last_anchor_time = time_str
             else:
                 if current_stationary:
                     insert_trip([
@@ -224,11 +222,7 @@ def generate_trips():
                     ])
                     current_stationary = None
 
-                time_spent = (
-                    get_time_difference(last_anchor_time, time_str) / 60
-                    if last_anchor_time
-                    else 0
-                )
+                time_spent = delta_seconds / 60
                 motion_state = "MOVING"
                 if velocity <= WALKING_MAX_SPEED:
                     transport_mode = "WALKING"

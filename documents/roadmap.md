@@ -18,6 +18,14 @@ Every calculation later is done on this aggregated data
 - Script for categorizing mode of travel
     * Will take in account speed and previous speed
 
+### Altitude
+- Download topographic data
+    * Europe can be less accurate, Higher accuracy only for Slovakia
+    * Fallback to less accurate data in case more accurate is missing
+- Create API on my home server
+- Script for adding topography 
+    * Will process aggregated data and add column elevation
+    
 ### Social interaciton
 - Script for calculating social interracitons
     * Will process data time for all trackers in paralell.
@@ -30,14 +38,6 @@ Every calculation later is done on this aggregated data
         + Meetings (trackers have likely met)
         + Close event (trackers were close to each other)
 
-### Altitude
-- Download topographic data
-    * Europe can be less accurate, Higher accuracy only for Slovakia
-    * Fallback to less accurate data in case more accurate is missing
-- Create API on my home server
-- Script for adding topography 
-    * Will process aggregated data and add column elevation
-    
 ## Data analysis and visualisation
 - TODO
     
@@ -48,3 +48,10 @@ first a homepage for each tracker.
     * days in operation
     * clean vs dirty data count
     * 
+- dynamic information for day
+    * elevation profile
+    * velocity profile (includes modes of transportation)
+    * map of movement
+    * animation???
+    
+
