@@ -23,8 +23,7 @@ $(DB_FILE):
 
 # Cleans the output of pipeline, does not delete critical data
 clean-pipeline-db:
-	sqlite3 $(DB_FILE) "DROP TABLE IF EXISTS clean_location_data, trips, places"
-
+	sqlite3 largeDB.db 'DROP TABLE IF EXISTS clean_location_data; DROP TABLE IF EXISTS trips; DROP TABLE IF EXISTS places;'
 
 pipeline: $(DB_FILE)
 	@echo ""
@@ -37,5 +36,7 @@ pipeline: $(DB_FILE)
 #   Really smart way of choosing the first .tif file
 	python3 processing-scripts/generate-trips.py -sqlite $(DB_FILE) -topo_data $(firstword $(wildcard topography_resources/*tif)) -v
 	@echo ""
+
 deploy:
 	cp $(DB_FILE) $(RELEASE_DB)
+	cd flask  && export FLASK_APP=main.py && flask run --port=7777
