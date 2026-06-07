@@ -1,6 +1,5 @@
 import argparse
 import sqlite3
-import sys
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 import datetime
 import heapq

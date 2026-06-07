@@ -161,8 +161,15 @@ def generate_trips():
                     ])
                     current_stationary = None
 
-                insert_trip([time_str, key, lat, lon, None, None, "INIT", 0, "UNKNOWN"])
-
+                distance = None
+                velocity = None
+                if prev_row_data is not None:
+                    delta_seconds = get_time_difference(prev_row_data["time"], time_str)
+                    distance = get_distance((prev_row_data["lat"], prev_row_data["lon"]), (lat, lon))
+                    velocity = (distance / 1000) / (delta_seconds / 3600) if delta_seconds > 0 else 0
+    
+                insert_trip([time_str, key, lat, lon, velocity, distance, "INIT", 0, "UNKNOWN"])
+    
                 prev_row_data = {"time": time_str, "lat": lat, "lon": lon}
                 continue
 
