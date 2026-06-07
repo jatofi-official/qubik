@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Dashboard - 3nbbTczU...</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1400px; margin: auto; }
+        .header-stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; text-align: center; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #666; font-size: 14px; text-transform: uppercase; }
+        .stat-card .value { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+        .card h2 { margin-top: 0; font-size: 18px; color: #2c3e50; }
+        
+        #map { height: 500px; border-radius: 4px; z-index: 1; }
+        .chart-container { position: relative; height: 300px; width: 100%; flex-grow: 1; min-height: 0; }
+        
+        /* Remove default leaflet marker background for our custom arrows */
+        .custom-arrow-icon { background: transparent; border: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-stats">
+        <div class="stat-card">
+            <h3>Tracker Hash</h3>
+            <div class="value">3nbbTczU...</div>
+        </div>
+        <div class="stat-card">
+            <h3>Target Date</h3>
+            <div class="value">2026-06-02</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>Daily Movement Map</h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="card">
+            <h2>Velocity Profile (km/h)</h2>
+            <div class="chart-container">
+                <canvas id="velocityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Elevation Profile (m)</h2>
+            <div class="chart-container">
+                <canvas id="elevationChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<script>
+    let rawData = [
+        { id: 11675, timestamp: '2026-06-03T08:21:36', lat: 48.160078, lng: 17.068973, velocity: 0.08, distance: 7.0, mode: 'STATIONARY', time_spent: 693.51, elevation: 197.0 },
+        { id: 11674, timestamp: '2026-06-02T20:48:05', lat: 48.160128, lng: 17.068824, velocity: 10.58, distance: 1770.0, mode: 'RUNNING/CYCLING', time_spent: 10.03, elevation: 197.0 },
+        { id: 11673, timestamp: '2026-06-02T20:38:03', lat: 48.145373, lng: 17.077741, velocity: 0.0, distance: 0.0, mode: 'STATIONARY', time_spent: 5.06, elevation: 150.0 },
+        { id: 11672, timestamp: '2026-06-02T20:32:59', lat: 48.145279, lng: 17.077871, velocity: 16.23, distance: 645.0, mode: 'RUNNING/CYCLING', time_spent: 2.38, elevation: 150.0 },
+        { id: 11671, timestamp: '2026-06-02T20:30:36', lat: 48.148102, lng: 17.070281, velocity: 29.66, distance: 1310.0, mode: 'DRIVING/TRAIN', time_spent: 2.65, elevation: 151.0 },
+        { id: 11670, timestamp: '2026-06-02T20:27:57', lat: 48.142490, lng: 17.085805, velocity: 21.61, distance: 1795.0, mode: 'DRIVING/TRAIN', time_spent: 4.98, elevation: 146.0 },
+        { id: 11669, timestamp: '2026-06-02T20:22:58', lat: 48.140344, lng: 17.109778, velocity: 2.71, distance: 454.0, mode: 'WALKING', time_spent: 10.03, elevation: 141.0 },
+        { id: 11668, timestamp: '2026-06-02T20:12:56', lat: 48.141093, lng: 17.115791, velocity: 237.60, distance: 66.0, mode: 'STATIONARY', time_spent: 0.05, elevation: 146.0 },
+        { id: 11667, timestamp: '2026-06-02T20:12:53', lat: 48.141939, lng: 17.115453, velocity: 26.11, distance: 2031.0, mode: 'DRIVING/TRAIN', time_spent: 4.66, elevation: 143.0 },
+        { id: 11666, timestamp: '2026-06-02T20:08:13', lat: 48.123709, lng: 17.113956, velocity: 115.2, distance: 32.0, mode: 'STATIONARY', time_spent: 120.96, elevation: 131.0 },
+        { id: 11665, timestamp: '2026-06-02T18:07:15', lat: 48.120529, lng: 17.117377, velocity: 7.73, distance: 1939.0, mode: 'RUNNING/CYCLING', time_spent: 15.03, elevation: 138.0 },
+        { id: 11664, timestamp: '2026-06-02T17:52:13', lat: 48.135740, lng: 17.104618, velocity: 13.70, distance: 1096.0, mode: 'RUNNING/CYCLING', time_spent: 4.80, elevation: 139.0 },
+        { id: 11663, timestamp: '2026-06-02T17:47:25', lat: 48.145579, lng: 17.103853, velocity: 7.42, distance: 33.0, mode: 'STATIONARY', time_spent: 0.26, elevation: 156.0 },
+        { id: 11662, timestamp: '2026-06-02T17:47:09', lat: 48.145025, lng: 17.103915, velocity: 17.24, distance: 1437.0, mode: 'RUNNING/CYCLING', time_spent: 5.0, elevation: 151.0 },
+        { id: 11661, timestamp: '2026-06-02T17:42:09', lat: 48.142906, lng: 17.084808, velocity: 20.24, distance: 1698.0, mode: 'DRIVING/TRAIN', time_spent: 5.03, elevation: 144.0 },
+        { id: 11660, timestamp: '2026-06-02T17:37:07', lat: 48.155762, lng: 17.072460, velocity: 4.16, distance: 698.0, mode: 'WALKING', time_spent: 10.05, elevation: 165.0 },
+        { id: 11659, timestamp: '2026-06-02T17:27:04', lat: 48.161015, lng: 17.067307, velocity: 0.45, distance: 75.0, mode: 'STATIONARY', time_spent: 1708.58, elevation: 207.0 }
+    ];
+
+    rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const modeStyles = {
+        'STATIONARY': { border: '#7f8c8d', fill: 'rgba(127, 140, 141, 0.3)' },
+        'WALKING': { border: '#2ecc71', fill: 'rgba(46, 204, 113, 0.3)' },
+        'RUNNING/CYCLING': { border: '#3498db', fill: 'rgba(52, 152, 219, 0.3)' },
+        'DRIVING/TRAIN': { border: '#e74c3c', fill: 'rgba(231, 76, 60, 0.3)' },
+        'INIT': { border: '#2c3e50', fill: 'rgba(44, 62, 80, 0.3)' },
+        'UNKNOWN': { border: '#95a5a6', fill: 'rgba(149, 165, 166, 0.3)' }
+    };
+
+    // --- 1. INITIALIZE MAP ---
+    const map = L.map('map').setView([48.14, 17.09], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    // --- HELPER: CALCULATE BEARING ---
+    // Returns the angle between two coordinates in degrees (0 = North, 90 = East)
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const dLng = (lng2 - lng1) * toRad;
+        const y = Math.sin(dLng) * Math.cos(lat2 * toRad);
+        const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+                  Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos(dLng);
+        const brng = Math.atan2(y, x) * toDeg;
+        return (brng + 360) % 360;
+    }
+
+    // --- 2. DRAW MAP DATA ---
+    const maxIndex = Math.max(1, rawData.length - 1); 
+
+    for (let i = 0; i < rawData.length; i++) {
+        const ping = rawData[i];
+        const color = modeStyles[ping.mode]?.border || modeStyles['UNKNOWN'].border;
+        const currentPoint = [ping.lat, ping.lng];
+
+        // Opacity scales chronologically from 0.2 up to 1.0
+        const currentProgress = i / maxIndex;
+        const opacity = 0.2 + (0.8 * currentProgress);
+
+        // Draw connecting line & arrow
+        if (i > 0 && ping.mode !== 'INIT') {
+            const prevPoint = [rawData[i-1].lat, rawData[i-1].lng];
+            
+            // Draw standard uniform line for this segment
+            L.polyline([prevPoint, currentPoint], { 
+                color: color, 
+                weight: 4, 
+                opacity: opacity 
+            }).addTo(map);
+
+            // Calculate bearing and midpoint for the arrow
+            const bearing = calculateBearing(prevPoint[0], prevPoint[1], currentPoint[0], currentPoint[1]);
+            const midLat = (prevPoint[0] + currentPoint[0]) / 2;
+            const midLng = (prevPoint[1] + currentPoint[1]) / 2;
+
+            // Generate a rotated SVG arrow
+            const arrowSvg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="transform: rotate(${bearing}deg);">
+                    <path d="M12 2L22 20L12 16L2 20L12 2Z" fill="${color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+            `;
+
+            const arrowIcon = L.divIcon({
+                className: 'custom-arrow-icon',
+                html: arrowSvg,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7] // Centers the SVG perfectly on the midpoint
+            });
+
+            // Drop the arrow marker on the map
+            L.marker([midLat, midLng], { icon: arrowIcon, opacity: opacity, interactive: false }).addTo(map);
+        }
+
+        let pointRadius = ping.mode === 'STATIONARY' ? Math.min(25, 6 + (ping.time_spent * 0.05)) : 6;
+        
+        L.circleMarker(currentPoint, { 
+            radius: pointRadius, 
+            fillColor: color, 
+            color: '#fff', 
+            weight: 1, 
+            fillOpacity: opacity,
+            opacity: opacity 
+        }).addTo(map);
+        
+        let displayVelocity = ping.mode === 'STATIONARY' ? 0.00 : ping.velocity;
+        const velocityStr = displayVelocity !== null ? parseFloat(displayVelocity).toFixed(2) + ' km/h' : 'N/A';
+        const distanceStr = ping.distance !== null ? parseFloat(ping.distance).toFixed(2) + ' m' : 'N/A';
+        const timeSpentStr = ping.time_spent !== null ? parseFloat(ping.time_spent).toFixed(2) + ' min' : 'N/A';
+        const elevationStr = ping.elevation !== null ? parseFloat(ping.elevation).toFixed(2) + ' m' : 'N/A';
+        const timeStr = new Date(ping.timestamp).toLocaleString();
+
+        L.circleMarker(currentPoint, { radius: 25, fillColor: 'transparent', color: 'transparent', weight: 0, fillOpacity: 0 })
+            .bindPopup(`Time: <b>${timeStr}</b><br>Mode: <b>${ping.mode}</b><br>Velocity: ${velocityStr}<br>Distance: ${distanceStr}<br>Time Spent: ${timeSpentStr}<br>Elevation: ${elevationStr}`)
+            .addTo(map);
+    }
+
+    // --- 3. PREPARE SEPARATED CHART DATA ---
+    const velDatasetsMap = {};
+    const eleDatasetsMap = {};
+
+    Object.keys(modeStyles).forEach(mode => {
+        velDatasetsMap[mode] = { label: mode, data: [], borderColor: modeStyles[mode].border, backgroundColor: modeStyles[mode].fill, borderWidth: 2, fill: 'origin', pointRadius: 0, pointHoverRadius: 0, spanGaps: false };
+        eleDatasetsMap[mode] = { label: mode, data: [], borderColor: modeStyles[mode].border, backgroundColor: modeStyles[mode].fill, borderWidth: 2, fill: 'origin', pointRadius: 0, pointHoverRadius: 0, spanGaps: false };
+    });
+
+    const dayStart = new Date('2026-06-02T00:00:00').getTime();
+    const dayEnd = new Date('2026-06-02T23:59:59').getTime();
+
+    for (let i = 0; i < rawData.length; i++) {
+        const ping = rawData[i];
+        const actualEnd = new Date(ping.timestamp).getTime();
+        const actualStart = actualEnd - (ping.time_spent * 60000); 
+
+        if (actualEnd >= dayStart && actualStart <= dayEnd) {
+            const plotStart = Math.max(actualStart, dayStart);
+            const plotEnd = Math.min(actualEnd, dayEnd);
+
+            let v = ping.mode === 'STATIONARY' ? 0 : (ping.velocity || 0);
+            let e = ping.elevation || 0;
+
+            velDatasetsMap[ping.mode].data.push(
+                { x: plotStart, y: v },
+                { x: plotEnd, y: v },
+                { x: plotEnd + 1, y: null } 
+            );
+
+            eleDatasetsMap[ping.mode].data.push(
+                { x: plotStart, y: e },
+                { x: plotEnd, y: e },
+                { x: plotEnd + 1, y: null }
+            );
+        }
+    }
+
+    const velocityDatasets = Object.values(velDatasetsMap).filter(ds => ds.data.length > 0);
+    const elevationDatasets = Object.values(eleDatasetsMap).filter(ds => ds.data.length > 0);
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: false },
+        scales: {
+            x: {
+                type: 'time',
+                time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+                min: dayStart,
+                max: dayEnd,
+                grid: { 
+                    display: true, 
+                    color: 'rgba(200, 200, 200, 0.4)', 
+                    drawOnChartArea: true,
+                    drawTicks: true
+                }
+            },
+            y: { 
+                beginAtZero: true,
+                grid: { color: 'rgba(200, 200, 200, 0.2)' }
+            }
+        },
+        plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } }
+        }
+    };
+
+    // --- 4. RENDER CHARTS ---
+    new Chart(document.getElementById('velocityChart'), {
+        type: 'line',
+        data: { datasets: velocityDatasets },
+        options: commonOptions
+    });
+
+    new Chart(document.getElementById('elevationChart'), {
+        type: 'line',
+        data: { datasets: elevationDatasets },
+        options: commonOptions
+    });
+</script>
+</body>
+</html>

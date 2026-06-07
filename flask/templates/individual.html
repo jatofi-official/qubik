@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Presentation Dashboard</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #f8fafc;
+            --sidebar-accent: #1e293b;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border-radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            height: 100vh;
+        }
+
+        /* ================= LEFT SIDEBAR ================= */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            z-index: 10;
+            overflow-y: auto; /* Allows scrolling if screen is too small */
+        }
+
+        .brand h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .brand p { font-size: 0.85rem; color: #94a3b8; }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        select.tracker-select {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--sidebar-accent);
+            color: white;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--sidebar-accent);
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+
+        .date-nav button {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .date-nav button:hover { background-color: #334155; }
+        .date-nav .current-date { font-weight: 600; font-size: 0.95rem; }
+
+        /* Statistics Layout */
+        .stats-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 700;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+
+        .stat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .stat-row .stat-label {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Simple white icons */
+        .stat-row .stat-label i {
+            color: #ffffff;
+            width: 16px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .stat-row .stat-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* Color accents for specific data points */
+        .val-danger { color: #f87171 !important; }
+        .val-success { color: #34d399 !important; }
+
+        /* ================= RIGHT MAIN CONTENT ================= */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 24px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            height: 350px;
+            flex-shrink: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .map-row {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            background-color: #e2e8f0;
+            z-index: 1;
+        }
+    </style>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+</head>
+<body>
+
+    <div class="dashboard">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Individual tracker</h1>
+                <p>{{tracker_name}}</p>
+            </div>
+
+            <div class="control-group">
+                <label>Select Tracker</label>
+                <select class="tracker-select">
+                    <option value="3nbbTczUGeE...">3nbbTczUGeE... (Fleet Alpha)</option>
+                    <option value="8xmnQweRty...">8xmnQweRty... (Fleet Beta)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Current Date</label>
+                <div class="date-nav">
+                    <button onclick="window.location.href='{{ url_for('individual', date=prev_date) }}'"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span class="current-date">{{current_date}}</span>
+                    <button onclick="window.location.href='{{ url_for('individual', date=next_date) }}'"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="section-header">All-Time Tracker Info</div>
+                <div class="stat-list">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-calendar-check"></i> Days Active</span>
+                        <span class="stat-value">{{total.days_active}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-satellite-dish"></i> Total Pings</span>
+                        <span class="stat-value">{{total.pings}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-filter"></i> Valid / Rejected</span>
+                        <span class="stat-value"><span class="val-success">{{total.valid}}</span> / <span class="val-danger">{{total.rejected}}</span></span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-gauge-high"></i> Absolute Max Speed</span>
+                        <span class="stat-value">{{total.max_speed}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-mountain"></i> Min / Max Elevation</span>
+                        <span class="stat-value">{{total.min_elevation}} / {{total.max_elevation}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="section-header">Daily Info: {{current_date}}</div>
+                <div class="stat-list">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-satellite-dish"></i> Daily Pings</span>
+                        <span class="stat-value">{{daily.pings}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-filter"></i> Valid / Rejected</span>
+                        <span class="stat-value"><span class="val-success">{{daily.valid}}</span> / <span class="val-danger">{{daily.rejected}}</span></span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-gauge"></i> Max Speed</span>
+                        <span class="stat-value">{{daily.max_speed}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-mountain-sun"></i> Min / Max Elevation</span>
+                        <span class="stat-value">{{daily.min_elevation}} / {{daily.max_elevation}}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up"></i> Elevation Gain</span>
+                        <span class="stat-value">{{daily.elevation_gain}} m</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-stopwatch"></i> Time Stationary</span>
+                        <span class="stat-value">{{daily.hours_stationary}} h {{daily.minutes_stationary}} min</span>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <main class="main-content">
+            
+            <div class="charts-row">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-gauge-high" style="color: var(--primary);"></i> 
+                        Velocity Profile (km/h)
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="velocityChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-mountain-sun" style="color: var(--success);"></i> 
+                        Elevation Profile (m)
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="elevationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card map-row">
+                <div class="card-header">
+                    <i class="fa-solid fa-map-location-dot" style="color: var(--text-muted);"></i>
+                    Geospatial Path & Mode of Transport
+                </div>
+                <div id="map"></div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <script>
+    let rawData = [
+        { id: 11675, timestamp: '2026-06-03T08:21:36', lat: 48.160078, lng: 17.068973, velocity: 0.08, distance: 7.0, mode: 'STATIONARY', time_spent: 693.51, elevation: 197.0 },
+        { id: 11674, timestamp: '2026-06-02T20:48:05', lat: 48.160128, lng: 17.068824, velocity: 10.58, distance: 1770.0, mode: 'RUNNING/CYCLING', time_spent: 10.03, elevation: 197.0 },
+        { id: 11673, timestamp: '2026-06-02T20:38:03', lat: 48.145373, lng: 17.077741, velocity: 0.0, distance: 0.0, mode: 'STATIONARY', time_spent: 5.06, elevation: 150.0 },
+        { id: 11672, timestamp: '2026-06-02T20:32:59', lat: 48.145279, lng: 17.077871, velocity: 16.23, distance: 645.0, mode: 'RUNNING/CYCLING', time_spent: 2.38, elevation: 150.0 },
+        { id: 11671, timestamp: '2026-06-02T20:30:36', lat: 48.148102, lng: 17.070281, velocity: 29.66, distance: 1310.0, mode: 'DRIVING/TRAIN', time_spent: 2.65, elevation: 151.0 },
+        { id: 11670, timestamp: '2026-06-02T20:27:57', lat: 48.142490, lng: 17.085805, velocity: 21.61, distance: 1795.0, mode: 'DRIVING/TRAIN', time_spent: 4.98, elevation: 146.0 },
+        { id: 11669, timestamp: '2026-06-02T20:22:58', lat: 48.140344, lng: 17.109778, velocity: 2.71, distance: 454.0, mode: 'WALKING', time_spent: 10.03, elevation: 141.0 },
+        { id: 11668, timestamp: '2026-06-02T20:12:56', lat: 48.141093, lng: 17.115791, velocity: 237.60, distance: 66.0, mode: 'STATIONARY', time_spent: 0.05, elevation: 146.0 },
+        { id: 11667, timestamp: '2026-06-02T20:12:53', lat: 48.141939, lng: 17.115453, velocity: 26.11, distance: 2031.0, mode: 'DRIVING/TRAIN', time_spent: 4.66, elevation: 143.0 },
+        { id: 11666, timestamp: '2026-06-02T20:08:13', lat: 48.123709, lng: 17.113956, velocity: 115.2, distance: 32.0, mode: 'STATIONARY', time_spent: 120.96, elevation: 131.0 },
+        { id: 11665, timestamp: '2026-06-02T18:07:15', lat: 48.120529, lng: 17.117377, velocity: 7.73, distance: 1939.0, mode: 'RUNNING/CYCLING', time_spent: 15.03, elevation: 138.0 },
+        { id: 11664, timestamp: '2026-06-02T17:52:13', lat: 48.135740, lng: 17.104618, velocity: 13.70, distance: 1096.0, mode: 'RUNNING/CYCLING', time_spent: 4.80, elevation: 139.0 },
+        { id: 11663, timestamp: '2026-06-02T17:47:25', lat: 48.145579, lng: 17.103853, velocity: 7.42, distance: 33.0, mode: 'STATIONARY', time_spent: 0.26, elevation: 156.0 },
+        { id: 11662, timestamp: '2026-06-02T17:47:09', lat: 48.145025, lng: 17.103915, velocity: 17.24, distance: 1437.0, mode: 'RUNNING/CYCLING', time_spent: 5.0, elevation: 151.0 },
+        { id: 11661, timestamp: '2026-06-02T17:42:09', lat: 48.142906, lng: 17.084808, velocity: 20.24, distance: 1698.0, mode: 'DRIVING/TRAIN', time_spent: 5.03, elevation: 144.0 },
+        { id: 11660, timestamp: '2026-06-02T17:37:07', lat: 48.155762, lng: 17.072460, velocity: 4.16, distance: 698.0, mode: 'WALKING', time_spent: 10.05, elevation: 165.0 },
+        { id: 11659, timestamp: '2026-06-02T17:27:04', lat: 48.161015, lng: 17.067307, velocity: 0.45, distance: 75.0, mode: 'STATIONARY', time_spent: 1708.58, elevation: 207.0 }
+    ];
+
+    rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const modeStyles = {
+        'STATIONARY': { border: '#7f8c8d', fill: 'rgba(127, 140, 141, 0.3)' },
+        'WALKING': { border: '#2ecc71', fill: 'rgba(46, 204, 113, 0.3)' },
+        'RUNNING/CYCLING': { border: '#3498db', fill: 'rgba(52, 152, 219, 0.3)' },
+        'DRIVING/TRAIN': { border: '#e74c3c', fill: 'rgba(231, 76, 60, 0.3)' },
+        'INIT': { border: '#2c3e50', fill: 'rgba(44, 62, 80, 0.3)' },
+        'UNKNOWN': { border: '#95a5a6', fill: 'rgba(149, 165, 166, 0.3)' }
+    };
+
+    // --- 1. INITIALIZE MAP ---
+    const map = L.map('map').setView([48.14, 17.09], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    // --- HELPER: CALCULATE BEARING ---
+    // Returns the angle between two coordinates in degrees (0 = North, 90 = East)
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const dLng = (lng2 - lng1) * toRad;
+        const y = Math.sin(dLng) * Math.cos(lat2 * toRad);
+        const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+                  Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos(dLng);
+        const brng = Math.atan2(y, x) * toDeg;
+        return (brng + 360) % 360;
+    }
+
+    // --- 2. DRAW MAP DATA ---
+    const maxIndex = Math.max(1, rawData.length - 1); 
+
+    for (let i = 0; i < rawData.length; i++) {
+        const ping = rawData[i];
+        const color = modeStyles[ping.mode]?.border || modeStyles['UNKNOWN'].border;
+        const currentPoint = [ping.lat, ping.lng];
+
+        // Opacity scales chronologically from 0.2 up to 1.0
+        const currentProgress = i / maxIndex;
+        const opacity = 0.2 + (0.8 * currentProgress);
+
+        // Draw connecting line & arrow
+        if (i > 0 && ping.mode !== 'INIT') {
+            const prevPoint = [rawData[i-1].lat, rawData[i-1].lng];
+            
+            // Draw standard uniform line for this segment
+            L.polyline([prevPoint, currentPoint], { 
+                color: color, 
+                weight: 4, 
+                opacity: opacity 
+            }).addTo(map);
+
+            // Calculate bearing and midpoint for the arrow
+            const bearing = calculateBearing(prevPoint[0], prevPoint[1], currentPoint[0], currentPoint[1]);
+            const midLat = (prevPoint[0] + currentPoint[0]) / 2;
+            const midLng = (prevPoint[1] + currentPoint[1]) / 2;
+
+            // Generate a rotated SVG arrow
+            const arrowSvg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="transform: rotate(${bearing}deg);">
+                    <path d="M12 2L22 20L12 16L2 20L12 2Z" fill="${color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+            `;
+
+            const arrowIcon = L.divIcon({
+                className: 'custom-arrow-icon',
+                html: arrowSvg,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7] // Centers the SVG perfectly on the midpoint
+            });
+
+            // Drop the arrow marker on the map
+            L.marker([midLat, midLng], { icon: arrowIcon, opacity: opacity, interactive: false }).addTo(map);
+        }
+
+        let pointRadius = ping.mode === 'STATIONARY' ? Math.min(25, 6 + (ping.time_spent * 0.05)) : 6;
+        
+        L.circleMarker(currentPoint, { 
+            radius: pointRadius, 
+            fillColor: color, 
+            color: '#fff', 
+            weight: 1, 
+            fillOpacity: opacity,
+            opacity: opacity 
+        }).addTo(map);
+        
+        let displayVelocity = ping.mode === 'STATIONARY' ? 0.00 : ping.velocity;
+        const velocityStr = displayVelocity !== null ? parseFloat(displayVelocity).toFixed(2) + ' km/h' : 'N/A';
+        const distanceStr = ping.distance !== null ? parseFloat(ping.distance).toFixed(2) + ' m' : 'N/A';
+        const timeSpentStr = ping.time_spent !== null ? parseFloat(ping.time_spent).toFixed(2) + ' min' : 'N/A';
+        const elevationStr = ping.elevation !== null ? parseFloat(ping.elevation).toFixed(2) + ' m' : 'N/A';
+        const timeStr = new Date(ping.timestamp).toLocaleString();
+
+        L.circleMarker(currentPoint, { radius: 25, fillColor: 'transparent', color: 'transparent', weight: 0, fillOpacity: 0 })
+            .bindPopup(`Time: <b>${timeStr}</b><br>Mode: <b>${ping.mode}</b><br>Velocity: ${velocityStr}<br>Distance: ${distanceStr}<br>Time Spent: ${timeSpentStr}<br>Elevation: ${elevationStr}`)
+            .addTo(map);
+    }
+
+    // --- 3. PREPARE SEPARATED CHART DATA ---
+    const velDatasetsMap = {};
+    const eleDatasetsMap = {};
+
+    Object.keys(modeStyles).forEach(mode => {
+        velDatasetsMap[mode] = { label: mode, data: [], borderColor: modeStyles[mode].border, backgroundColor: modeStyles[mode].fill, borderWidth: 2, fill: 'origin', pointRadius: 0, pointHoverRadius: 0, spanGaps: false };
+        eleDatasetsMap[mode] = { label: mode, data: [], borderColor: modeStyles[mode].border, backgroundColor: modeStyles[mode].fill, borderWidth: 2, fill: 'origin', pointRadius: 0, pointHoverRadius: 0, spanGaps: false };
+    });
+
+    const dayStart = new Date('2026-06-02T00:00:00').getTime();
+    const dayEnd = new Date('2026-06-02T23:59:59').getTime();
+
+    for (let i = 0; i < rawData.length; i++) {
+        const ping = rawData[i];
+        const actualEnd = new Date(ping.timestamp).getTime();
+        const actualStart = actualEnd - (ping.time_spent * 60000); 
+
+        if (actualEnd >= dayStart && actualStart <= dayEnd) {
+            const plotStart = Math.max(actualStart, dayStart);
+            const plotEnd = Math.min(actualEnd, dayEnd);
+
+            let v = ping.mode === 'STATIONARY' ? 0 : (ping.velocity || 0);
+            let e = ping.elevation || 0;
+
+            velDatasetsMap[ping.mode].data.push(
+                { x: plotStart, y: v },
+                { x: plotEnd, y: v },
+                { x: plotEnd + 1, y: null } 
+            );
+
+            eleDatasetsMap[ping.mode].data.push(
+                { x: plotStart, y: e },
+                { x: plotEnd, y: e },
+                { x: plotEnd + 1, y: null }
+            );
+        }
+    }
+
+    const velocityDatasets = Object.values(velDatasetsMap).filter(ds => ds.data.length > 0);
+    const elevationDatasets = Object.values(eleDatasetsMap).filter(ds => ds.data.length > 0);
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: false },
+        scales: {
+            x: {
+                type: 'time',
+                time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+                min: dayStart,
+                max: dayEnd,
+                grid: { 
+                    display: true, 
+                    color: 'rgba(200, 200, 200, 0.4)', 
+                    drawOnChartArea: true,
+                    drawTicks: true
+                }
+            },
+            y: { 
+                beginAtZero: true,
+                grid: { color: 'rgba(200, 200, 200, 0.2)' }
+            }
+        },
+        plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } }
+        }
+    };
+
+    // --- 4. RENDER CHARTS ---
+    new Chart(document.getElementById('velocityChart'), {
+        type: 'line',
+        data: { datasets: velocityDatasets },
+        options: commonOptions
+    });
+
+    new Chart(document.getElementById('elevationChart'), {
+        type: 'line',
+        data: { datasets: elevationDatasets },
+        options: commonOptions
+    });
+</script>
+
+</body>
+</html>

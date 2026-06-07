@@ -5,3 +5,11 @@ sqlite3 largeDB.db < create_database_sqlite.sql
 python mysql-to-sqlite-dump.py "root" "" -v
 
 sqlite3 ../largeDB.db "DELETE FROM location_data"
+
+
+Running flask:
+export FLASK_APP=main.py
+
+export FLASK_ENV=development 
+
+flask run --port=7777
