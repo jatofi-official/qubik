@@ -246,8 +246,9 @@
             <div class="control-group">
                 <label>Select Tracker</label>
                 <select class="tracker-select" onchange="window.location.href='/individual/' + this.value">
-                    <option value="3nbbTczUGeECZYuKlFnCOP0gfuPBzTsMjxcbsGMrFuI=" {% if hashed_key == '3nbbTczUGeECZYuKlFnCOP0gfuPBzTsMjxcbsGMrFuI=' %}selected{% endif %}>3nbbTczUGeE... (Fleet Alpha)</option>
-                    <option value="8xmnQweRty...">8xmnQweRty... (Fleet Beta)</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.hashed_key }}" {% if hashed_key == tag.hashed_key %}selected{% endif %}>{{ tag.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
