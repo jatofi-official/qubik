@@ -356,27 +356,10 @@
 
 
     <script>
-    let rawData = [
-        { id: 11675, timestamp: '2026-06-03T08:21:36', lat: 48.160078, lng: 17.068973, velocity: 0.08, distance: 7.0, mode: 'STATIONARY', time_spent: 693.51, elevation: 197.0 },
-        { id: 11674, timestamp: '2026-06-02T20:48:05', lat: 48.160128, lng: 17.068824, velocity: 10.58, distance: 1770.0, mode: 'RUNNING/CYCLING', time_spent: 10.03, elevation: 197.0 },
-        { id: 11673, timestamp: '2026-06-02T20:38:03', lat: 48.145373, lng: 17.077741, velocity: 0.0, distance: 0.0, mode: 'STATIONARY', time_spent: 5.06, elevation: 150.0 },
-        { id: 11672, timestamp: '2026-06-02T20:32:59', lat: 48.145279, lng: 17.077871, velocity: 16.23, distance: 645.0, mode: 'RUNNING/CYCLING', time_spent: 2.38, elevation: 150.0 },
-        { id: 11671, timestamp: '2026-06-02T20:30:36', lat: 48.148102, lng: 17.070281, velocity: 29.66, distance: 1310.0, mode: 'DRIVING/TRAIN', time_spent: 2.65, elevation: 151.0 },
-        { id: 11670, timestamp: '2026-06-02T20:27:57', lat: 48.142490, lng: 17.085805, velocity: 21.61, distance: 1795.0, mode: 'DRIVING/TRAIN', time_spent: 4.98, elevation: 146.0 },
-        { id: 11669, timestamp: '2026-06-02T20:22:58', lat: 48.140344, lng: 17.109778, velocity: 2.71, distance: 454.0, mode: 'WALKING', time_spent: 10.03, elevation: 141.0 },
-        { id: 11668, timestamp: '2026-06-02T20:12:56', lat: 48.141093, lng: 17.115791, velocity: 237.60, distance: 66.0, mode: 'STATIONARY', time_spent: 0.05, elevation: 146.0 },
-        { id: 11667, timestamp: '2026-06-02T20:12:53', lat: 48.141939, lng: 17.115453, velocity: 26.11, distance: 2031.0, mode: 'DRIVING/TRAIN', time_spent: 4.66, elevation: 143.0 },
-        { id: 11666, timestamp: '2026-06-02T20:08:13', lat: 48.123709, lng: 17.113956, velocity: 115.2, distance: 32.0, mode: 'STATIONARY', time_spent: 120.96, elevation: 131.0 },
-        { id: 11665, timestamp: '2026-06-02T18:07:15', lat: 48.120529, lng: 17.117377, velocity: 7.73, distance: 1939.0, mode: 'RUNNING/CYCLING', time_spent: 15.03, elevation: 138.0 },
-        { id: 11664, timestamp: '2026-06-02T17:52:13', lat: 48.135740, lng: 17.104618, velocity: 13.70, distance: 1096.0, mode: 'RUNNING/CYCLING', time_spent: 4.80, elevation: 139.0 },
-        { id: 11663, timestamp: '2026-06-02T17:47:25', lat: 48.145579, lng: 17.103853, velocity: 7.42, distance: 33.0, mode: 'STATIONARY', time_spent: 0.26, elevation: 156.0 },
-        { id: 11662, timestamp: '2026-06-02T17:47:09', lat: 48.145025, lng: 17.103915, velocity: 17.24, distance: 1437.0, mode: 'RUNNING/CYCLING', time_spent: 5.0, elevation: 151.0 },
-        { id: 11661, timestamp: '2026-06-02T17:42:09', lat: 48.142906, lng: 17.084808, velocity: 20.24, distance: 1698.0, mode: 'DRIVING/TRAIN', time_spent: 5.03, elevation: 144.0 },
-        { id: 11660, timestamp: '2026-06-02T17:37:07', lat: 48.155762, lng: 17.072460, velocity: 4.16, distance: 698.0, mode: 'WALKING', time_spent: 10.05, elevation: 165.0 },
-        { id: 11659, timestamp: '2026-06-02T17:27:04', lat: 48.161015, lng: 17.067307, velocity: 0.45, distance: 75.0, mode: 'STATIONARY', time_spent: 1708.58, elevation: 207.0 }
-    ];
+    let rawData = {{ raw_data | tojson | safe }};
 
-    rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // This should be theoretically not necessary, since we sort the data. May be nice to keep as a sanity check, bu I think we can remove it.
+    // rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     const modeStyles = {
         'STATIONARY': { border: '#7f8c8d', fill: 'rgba(127, 140, 141, 0.3)' },
@@ -424,6 +407,9 @@
             document.getElementById('prev-btn').setAttribute('onclick', `loadDateData('${data.prev_date}')`);
             document.getElementById('next-btn').setAttribute('onclick', `loadDateData('${data.next_date}')`);
             
+            // Push URL state without refreshing the page
+            window.history.pushState({}, '', `/individual/{{hashed_key}}/${data.current_date}`);
+            
             // Update Stats
             document.getElementById('daily-pings').innerText = data.daily.pings;
             document.getElementById('daily-valid').innerText = data.daily.valid;
@@ -435,6 +421,8 @@
             
             // Update Map and Charts
             currentMapDate = data.current_date;
+            rawData = data.raw_data;
+            rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             renderMapAndCharts();
         } catch(err) {
             console.error("Error loading date data:", err);
@@ -451,12 +439,10 @@
 
         const latLngs = [];
         
-        // Filter map data by the active date
-        const mapData = rawData.filter(ping => ping.timestamp.startsWith(currentMapDate));
-        const maxIndex = Math.max(1, mapData.length - 1); 
+        const maxIndex = Math.max(1, rawData.length - 1); 
 
-        for (let i = 0; i < mapData.length; i++) {
-            const ping = mapData[i];
+        for (let i = 0; i < rawData.length; i++) {
+            const ping = rawData[i];
             const color = modeStyles[ping.mode]?.border || modeStyles['UNKNOWN'].border;
             const currentPoint = [ping.lat, ping.lng];
             latLngs.push(currentPoint);
@@ -464,8 +450,8 @@
             const currentProgress = i / maxIndex;
             const opacity = 0.2 + (0.8 * currentProgress);
 
-            if (i > 0 && ping.mode !== 'INIT') {
-                const prevPoint = [mapData[i-1].lat, mapData[i-1].lng];
+            if (i > 0 && ping.motion_state !== 'INIT') {
+                const prevPoint = [rawData[i-1].lat, rawData[i-1].lng];
                 
                 const polyline = L.polyline([prevPoint, currentPoint], { 
                     color: color, 
@@ -542,16 +528,19 @@
                 const plotStart = Math.max(actualStart, dayStart);
                 const plotEnd = Math.min(actualEnd, dayEnd);
 
-                let v = ping.mode === 'STATIONARY' ? 0 : (ping.velocity || 0);
+                // Fallback to UNKNOWN if mode is missing from styles to prevent JS crashes. However this prooobably should not happen:D
+                const safeMode = modeStyles[ping.mode] ? ping.mode : 'UNKNOWN';
+
+                let v = safeMode === 'STATIONARY' ? 0 : (ping.velocity || 0);
                 let e = ping.elevation || 0;
 
-                velDatasetsMap[ping.mode].data.push(
+                velDatasetsMap[safeMode].data.push(
                     { x: plotStart, y: v },
                     { x: plotEnd, y: v },
                     { x: plotEnd + 1, y: null } 
                 );
 
-                eleDatasetsMap[ping.mode].data.push(
+                eleDatasetsMap[safeMode].data.push(
                     { x: plotStart, y: e },
                     { x: plotEnd, y: e },
                     { x: plotEnd + 1, y: null }
