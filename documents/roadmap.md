@@ -31,10 +31,6 @@ Every calculation later is done on this aggregated data
     * Will process data time for all trackers in paralell.
     * Output will be:
         + Areas of interest (a tracker has spent some time on, multiple degrees)
-
-------WE ARE HERE------
-
-        + Time trackers spent together
         + Meetings (trackers have likely met)
         + Close event (trackers were close to each other)
 
@@ -42,16 +38,33 @@ Every calculation later is done on this aggregated data
 - TODO
     
 - we will create a flask
-first a homepage for each tracker.
 
-- static information:
-    * days in operation
-    * clean vs dirty data count
-    * 
-- dynamic information for day
-    * elevation profile
-    * velocity profile (includes modes of transportation)
-    * map of movement
-    * animation???
+- homepage for each tracker.
+    - static information:
+        * days in operation
+        * clean vs dirty data count
+        * 
+    - dynamic information for day
+        * elevation profile
+        * velocity profile (includes modes of transportation)
+        * map of movement
+        * animation???
+
+------WE ARE HERE------
+
+- homepage for multiple trackers
+    - possible meeting points on map
     
 
+Analysis:
+
+- for each tag we want radius of gyration.
+- cumulative distance for each mode of transport
+- How many times two trackers met.
+- density map for each point
+
+Distribution:
+- daily max speed
+- daily radius of gyration
+- daily elevation gain
+- daily pings, 

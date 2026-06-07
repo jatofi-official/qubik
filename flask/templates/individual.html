@@ -450,14 +450,20 @@
             const currentProgress = i / maxIndex;
             const opacity = 0.2 + (0.8 * currentProgress);
 
-            if (i > 0 && ping.motion_state !== 'INIT') {
+            if (i > 0) {
                 const prevPoint = [rawData[i-1].lat, rawData[i-1].lng];
                 
-                const polyline = L.polyline([prevPoint, currentPoint], { 
+                let polylineOptions = { 
                     color: color, 
                     weight: 4, 
                     opacity: opacity 
-                }).addTo(map);
+                };
+
+                if (ping.motion_state === 'INIT') {
+                    polylineOptions.dashArray = '10, 10';
+                }
+
+                const polyline = L.polyline([prevPoint, currentPoint], polylineOptions).addTo(map);
                 mapLayers.push(polyline);
 
                 const bearing = calculateBearing(prevPoint[0], prevPoint[1], currentPoint[0], currentPoint[1]);

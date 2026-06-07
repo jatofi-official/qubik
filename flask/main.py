@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-database_name = "../largeDB.db"
+database_name = "../releaseDB.db"
 
 def get_db_connection():
     conn = sqlite3.connect(database_name)
@@ -128,103 +128,35 @@ def get_daily_stats(hashed_key, date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Using LIKE is significantly faster because it can leverage database indexes
-    date_like = f"{date}%"
-
-    # Pings
-    sql = "SELECT COUNT(*) FROM location_data WHERE hashed_key = ? AND time LIKE ?"
-    cursor.execute(sql, (hashed_key, date_like))
-    total_pings = cursor.fetchone()[0]
-
-    sql = "SELECT COUNT(*) FROM clean_location_data WHERE hashed_key = ? AND time LIKE ?" 
-    cursor.execute(sql, (hashed_key, date_like))
-    valid_pings = cursor.fetchone()[0]
-
-    rejected_pings = total_pings - valid_pings
-
-    day_start = datetime.strptime(date, '%Y-%m-%d')
-    day_end = day_start + timedelta(days=1)
-    day_start_str = day_start.strftime('%Y-%m-%d %H:%M:%S')
-
-
-    # Fetch trips that overlap with the target day, along with the single trip recorded right before midnight
-    sql = """
-        SELECT time, velocity, motion_state, time_spent, elevation 
-        FROM trips 
-        WHERE hashed_key = ? AND time >= (
-            SELECT IFNULL(MAX(time), '1970-01-01') 
-            FROM trips 
-            WHERE hashed_key = ? AND time < ?
-        )
-        ORDER BY time ASC
-    """
-    cursor.execute(sql, (hashed_key, hashed_key, day_start_str))
-    
-    total_stationary_minutes = 0
-    max_speed = 0
-    min_elevation = float('inf')
-    max_elevation = float('-inf')
-    elevations = []
-
-    for row in cursor.fetchall():
-        end_time = datetime.strptime(row['time'], "%Y-%m-%d %H:%M:%S")
-        time_spent = row['time_spent'] or 0
-        start_time = end_time - timedelta(minutes=time_spent)
-        
-        # If we've started looping iget_raw_datanto trips entirely in the future, we can safely stop looking
-        if start_time >= day_end:
-            break
-        
-        # Clamp logic: Only calculate time that occurred strictly inside the 24h day boundary
-        overlap_start = max(start_time, day_start)
-        overlap_end = min(end_time, day_end)
-        overlap_duration_minutes = max(0.0, (overlap_end - overlap_start).total_seconds() / 60.0)
-        
-        e = row['elevation']
-
-        if end_time < day_start:
-            # This point is from strictly before the day started, append it only to ground the initial elevation gain
-            if e is not None:
-                elevations.append(e)
-            continue
-        
-        if row['motion_state'] == 'STATIONARY':
-            total_stationary_minutes += overlap_duration_minutes
-        elif row['motion_state'] == 'MOVING':
-            v = row['velocity']
-            if v and v > max_speed:
-                max_speed = v
-        
-        if e is not None:
-            if e < min_elevation: min_elevation = round(e)
-            if e > max_elevation: max_elevation = round(e)
-            elevations.append(e)
-
+    sql = "SELECT * FROM daily_stats WHERE hashed_key = ? AND date = ?"
+    cursor.execute(sql, (hashed_key, date))
+    row = cursor.fetchone()
     conn.close()
 
-    if min_elevation == float('inf'): min_elevation = "-"
-    if max_elevation == float('-inf'): max_elevation = "-"
-
-    hours_stationary = int(total_stationary_minutes // 60)
-    minutes_stationary = int(total_stationary_minutes % 60)
-
-    elevation_gain = 0
-    for i in range(1, len(elevations)):
-        diff = elevations[i] - elevations[i-1]
-        if diff > 0:
-            elevation_gain += diff
-
-    return {
-        "pings": total_pings,
-        "valid": valid_pings,
-        "rejected": rejected_pings,
-        "max_speed": f"{round(max_speed, 1)} km/h",
-        "min_elevation": f"{min_elevation} m",
-        "max_elevation": f"{max_elevation} m",
-        "elevation_gain": round(elevation_gain),
-        "hours_stationary": hours_stationary,
-        "minutes_stationary": minutes_stationary
-    }
+    if row and row["pings"] is not None:
+        return {
+            "pings": row["pings"],
+            "valid": row["valid"],
+            "rejected": row["rejected"],
+            "max_speed": row["max_speed"],
+            "min_elevation": row["min_elevation"],
+            "max_elevation": row["max_elevation"],
+            "elevation_gain": row["elevation_gain"],
+            "hours_stationary": row["minutes_stationary"] // 60,
+            "minutes_stationary": row["minutes_stationary"] % 60
+        }
+    else:
+        return {
+            "pings": 0,
+            "valid": 0,
+            "rejected": 0,
+            "max_speed": "0 km/h",
+            "min_elevation": "-",
+            "max_elevation": "-",
+            "elevation_gain": 0,
+            "hours_stationary": 0,
+            "minutes_stationary": 0
+        }
 
 def get_raw_data(hashed_key, date):
     conn = get_db_connection()

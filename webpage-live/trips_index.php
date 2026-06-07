@@ -53,7 +53,7 @@ if (isset($_GET['action'])) {
         }
 
         if ($_GET['action'] === 'get_places') {
-            $stmt = $pdo->query("SELECT latitude, longitude, significance, unique_tags FROM places");
+            $stmt = $pdo->query("SELECT latitude, longitude, significance, unique_tags, is_overnight FROM places");
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             exit;
         }
@@ -163,6 +163,7 @@ if (isset($_GET['action'])) {
             
             <div id="legend-places" class="legend" style="display: none;">
                 <div class="legend-item"><div class="color-box" style="background: #8e44ad; border-radius: 50%;"></div> Places (Size based on significance)</div>
+                <div class="legend-item"><div class="color-box" style="background: #e67e22; border-radius: 50%;"></div> Overnight Places</div>
             </div>
         </div>
         <div id="map"></div>
@@ -361,9 +362,15 @@ if (isset($_GET['action'])) {
                 latLngs.push(currentPoint);
 
                 // Draw connecting line (Colored by the mode of the segment arriving at this point)
-                if (i > 0 && loc.motion_state !== 'INIT') {
+                if (i > 0) {
                     const prevPoint = [locations[i-1].latitude, locations[i-1].longitude];
-                    const polyline = L.polyline([prevPoint, currentPoint], { color: color, weight: 4, opacity: 0.8 }).addTo(map);
+                    
+                    let polylineOptions = { color: color, weight: 4, opacity: 0.8 };
+                    if (loc.motion_state === 'INIT') {
+                        polylineOptions.dashArray = '10, 10';
+                    }
+                    
+                    const polyline = L.polyline([prevPoint, currentPoint], polylineOptions).addTo(map);
                     mapLayers.push(polyline);
                 }
 
@@ -420,8 +427,11 @@ if (isset($_GET['action'])) {
                     displayUnit = "hours";
                 }
 
-                const circle = L.circleMarker(currentPoint, { radius: radius, fillColor: '#8e44ad', color: '#fff', weight: 1, fillOpacity: 0.6 })
-                    .bindPopup(`<b>Popular Place</b><br>Time Spent: ${displaySig.toFixed(2)} ${displayUnit}<br>Unique Trackers: ${place.unique_tags}`).addTo(map);
+                const isOvernight = (place.is_overnight == 1 || place.is_overnight === 'true' || place.is_overnight === true);
+                const fillColor = isOvernight ? '#e67e22' : '#8e44ad';
+
+                const circle = L.circleMarker(currentPoint, { radius: radius, fillColor: fillColor, color: '#fff', weight: 1, fillOpacity: 0.6 })
+                    .bindPopup(`<b>Popular Place</b><br>Time Spent: ${displaySig.toFixed(2)} ${displayUnit}<br>Unique Trackers: ${place.unique_tags}<br>Overnight: ${isOvernight ? 'Yes' : 'No'}`).addTo(map);
                 
                 mapLayers.push(circle);
             });

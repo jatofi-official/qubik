@@ -19,8 +19,8 @@ engine = ElevationLookup(args.topo_data)
 
 # CONSTANTS
 WALKING_MIN_SPEED = 2
-WALKING_MAX_SPEED = 6
-CYCLING_MAX_SPEED = 20
+WALKING_MAX_SPEED = 5
+CYCLING_MAX_SPEED = 15
 STATIONARY_MERGE_RADIUS = 100  # meters
 
 TRIPS_TABLE_SQL = '''
@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS places (
     latitude REAL,
     longitude REAL,
     significance REAL,
-    unique_tags INTEGER
+    unique_tags INTEGER,
+    is_overnight BOOLEAN
 )
 '''
 
@@ -99,7 +100,7 @@ def insert_trip(values):
 def insert_place(values):
     _insert_record(
         "places",
-        ["latitude", "longitude", "significance", "unique_tags"],
+        ["latitude", "longitude", "significance", "unique_tags", "is_overnight"],
         values,
     )
 
@@ -271,13 +272,21 @@ def generate_places():
         if time_spent is None:
             time_spent = 0
 
+        # We categorise places that are overnight
+        is_overnight = False
+        if time and time_spent > 0:
+            end_time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+            start_time = end_time - datetime.timedelta(minutes=time_spent)
+            if start_time.date() < end_time.date():
+                is_overnight = True
+
         matched_cluster = None
         min_dist = STATIONARY_MERGE_RADIUS
 
         for cluster in places_clusters:
             dist_to_cluster = get_distance((lat, lon), (cluster["lat"], cluster["lon"]))
             if dist_to_cluster < min_dist:
-                min_dist = dist_to_cluster
+                min_dist = dist_to_cluster # Nice way of only getting the closest cluster
                 matched_cluster = cluster
 
         if matched_cluster:
@@ -287,6 +296,8 @@ def generate_places():
             matched_cluster["significance"] += time_spent
             matched_cluster["unique_tags"].add(key)
             matched_cluster["count"] += 1
+            if is_overnight: # Once it is tagged it will now change
+                matched_cluster["is_overnight"] = True
         else:
             places_clusters.append(
                 {
@@ -295,6 +306,7 @@ def generate_places():
                     "significance": time_spent,
                     "unique_tags": {key},
                     "count": 1,
+                    "is_overnight": is_overnight,
                 }
             )
 
@@ -306,6 +318,7 @@ def generate_places():
             cluster["lon"],
             cluster["significance"],
             len(cluster["unique_tags"]),
+            cluster["is_overnight"],
         ])
 
     sqlite_connection.commit()
