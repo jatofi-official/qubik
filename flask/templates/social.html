@@ -421,6 +421,21 @@
         return trackerColors[Math.abs(hash) % trackerColors.length];
     }
 
+    // --- HELPER: GET PLACE COLOR ---
+    const namedPlaceColors = {
+        "HQ": "#a855f7",
+        "Warehouse": "#f59e0b"
+    };
+    const placeColors = [
+        '#a855f7', '#f59e0b', '#ec4899', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f43f5e', '#8b5cf6', '#d946ef'
+    ];
+    function getPlaceColor(place) {
+        if (place.name && namedPlaceColors[place.name]) {
+            return namedPlaceColors[place.name];
+        }
+        return placeColors[(place.rank || 1) % placeColors.length];
+    }
+
     let mapLayers = [];
     let currentMapDate = '{{target_date}}';
 
@@ -430,7 +445,12 @@
     fetch('/api/places')
         .then(res => res.json())
         .then(data => {
-            allPlaces = data;
+            // The API returns places ordered by significance DESC
+            // Add a global rank based on the array index
+            allPlaces = data.map((place, index) => {
+                place.rank = index + 1;
+                return place;
+            });
             renderMap();
         })
         .catch(err => console.error("Error loading places:", err));
@@ -529,7 +549,7 @@
                 if (ping.mode === 'STATIONARY') {
                     for (const place of allPlaces) {
                         const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
-                        if (d < 0.001) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
+                        if (d < 0.0005) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
                             activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
                         }
                     }
@@ -565,9 +585,10 @@
 
         // Draw matched active places with distinct custom purple geotag markers
         for (const place of activePlacesMap.values()) {
+            const placeColor = getPlaceColor(place);
             const placeHtml = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="28" height="36" style="filter: drop-shadow(0px 4px 2px rgba(0,0,0,0.4));">
-                    <path fill="#a855f7" stroke="#ffffff" stroke-width="12" d="M172.3 501.7C27 291 0 269.4 0 192 0 86 86 0 192 0s192 86 192 192c0 77.4-27 99-172.3 309.7-9.5 13.8-29.9 13.8-39.5 0zM192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80-80 35.8-80 80 35.8 80 80 80z"/>
+                    <path fill="${placeColor}" stroke="#ffffff" stroke-width="12" d="M172.3 501.7C27 291 0 269.4 0 192 0 86 86 0 192 0s192 86 192 192c0 77.4-27 99-172.3 309.7-9.5 13.8-29.9 13.8-39.5 0zM192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80-80 35.8-80 80 35.8 80 80 80z"/>
                 </svg>
             `;
             const placeIcon = L.divIcon({
@@ -579,8 +600,8 @@
             });
 
             const marker = L.marker([place.latitude, place.longitude], { icon: placeIcon, zIndexOffset: 1000 }).addTo(map);
-            const pName = place.name || `Node #${place.id || 'N/A'}`;
-            marker.bindPopup(`<b><i class="fa-solid fa-map-pin" style="color: #a855f7;"></i> ${pName}</b><br>Significance: ${place.significance || 'Unknown'}`);
+            const pName = place.name || `Rank #${place.rank || 'N/A'}`;
+            marker.bindPopup(`<b><i class="fa-solid fa-map-pin" style="color: ${placeColor};"></i> ${pName}</b><br>Total time spent: ${Math.floor((place.significance || 0) / 60)} h ${Math.round(place.significance || 0) % 60} min`);
             mapLayers.push(marker);
             allLatLngs.push([place.latitude, place.longitude]);
         }
@@ -588,6 +609,17 @@
         if (allLatLngs.length > 0) {
             map.fitBounds(L.latLngBounds(allLatLngs), { padding: [50, 50] });
         }
+        
+        // Rebuild Timeline Legend dynamically
+        const legendContainer = document.querySelector('.timeline-legend');
+        let legendHtml = '<div class="legend-item"><div class="legend-color" style="background: var(--no-info);"></div> No Signal</div>' + 
+                         '<div class="legend-item"><div class="legend-color" style="background: linear-gradient(to right, #e6194B40, #3cb44b40);"></div> Moving</div>';
+        for (const place of activePlacesMap.values()) {
+            const placeColor = getPlaceColor(place);
+            const pName = place.name || `Rank #${place.rank || 'N/A'}`;
+            legendHtml += `<div class="legend-item"><div class="legend-color" style="background: ${placeColor};"></div> ${pName}</div>`;
+        }
+        legendContainer.innerHTML = legendHtml;
 
     }
     

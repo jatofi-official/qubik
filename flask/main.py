@@ -357,7 +357,7 @@ def api_social(date):
 def api_places():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM places")
+    cursor.execute("SELECT * FROM places ORDER BY significance DESC")
     places = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return jsonify(places)
