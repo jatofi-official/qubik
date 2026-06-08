@@ -30,8 +30,8 @@
             --place-alpha: #a855f7; /* Purple */
             --place-beta: #f59e0b;  /* Orange */
             --place-gamma: #ec4899; /* Pink */
-            --moving-info: #bae6fd; /* Light blue for moving/active info */
-            --no-info: #e2e8f0;     /* Gray for no info */
+            --moving-info: #94a3b8; /* Normal gray for moving info */
+            --no-info: #e2e8f0;     /* Light gray for no info */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -207,6 +207,12 @@
             flex-grow: 1;
         }
 
+        #swimlanes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
         .swimlane {
             display: flex;
             align-items: center;
@@ -368,7 +374,9 @@
 
 
 
-        <script>
+    <script>
+
+        
     let rawData = {{ raw_data | tojson | safe }};
 
     // Not optimal but oh well.
@@ -487,6 +495,13 @@
         mapLayers.forEach(layer => map.removeLayer(layer));
         mapLayers = [];
 
+        const dayStart = new Date(`${currentMapDate}T00:00:00`).getTime();
+        const dayEnd = new Date(`${currentMapDate}T23:59:59`).getTime();
+        const dayDuration = dayEnd - dayStart;
+
+        const swimlanesContainer = document.getElementById('swimlanes-container');
+        swimlanesContainer.innerHTML = '';
+
         const allLatLngs = [];
         const activePlacesMap = new Map();
         
@@ -500,6 +515,9 @@
 
             const maxIndex = Math.max(1, trackerData.length - 1); 
 
+            let prevTime = trackerData.length > 0 ? new Date(trackerData[0].timestamp).getTime() : dayStart;
+            let trackerBlocks = [];
+
             for (let i = 0; i < trackerData.length; i++) {
                 const ping = trackerData[i];
                 const currentPoint = [ping.lat, ping.lng];
@@ -508,7 +526,34 @@
                 const currentProgress = i / maxIndex;
                 const opacity = 0.2 + (0.8 * currentProgress);
 
+                const currTime = new Date(ping.timestamp).getTime();
+                let matchedPlace = null;
+
+                // Check if stationary and map to a known place within x meters
+                if (ping.mode === 'STATIONARY') {
+                    for (const place of allPlaces) {
+                        const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
+                        if (d < 0.0005) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
+                            activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
+                            matchedPlace = place;
+                            break;
+                        }
+                    }
+                }
+
                 if (i > 0) {
+                    if (ping.mode === 'STATIONARY') {
+                        const statStart = Math.max(prevTime, currTime - ((ping.time_spent || 0) * 60000));
+                        if (statStart > prevTime) {
+                            trackerBlocks.push({ start: prevTime, end: statStart, color: 'var(--moving-info)', title: 'Moving' });
+                        }
+                        let bColor = matchedPlace ? getPlaceColor(matchedPlace) : 'var(--moving-info)';
+                        let bTitle = matchedPlace ? (matchedPlace.name || `Rank #${matchedPlace.rank}`) : 'Stationary (Unknown)';
+                        trackerBlocks.push({ start: statStart, end: currTime, color: bColor, title: bTitle });
+                    } else {
+                        trackerBlocks.push({ start: prevTime, end: currTime, color: 'var(--moving-info)', title: 'Moving' });
+                    }
+
                     const prevPoint = [trackerData[i-1].lat, trackerData[i-1].lng];
                     
                     let polylineOptions = { 
@@ -545,15 +590,7 @@
                     mapLayers.push(marker);
                 }
 
-                // Check if stationary and map to a known place within x meters
-                if (ping.mode === 'STATIONARY') {
-                    for (const place of allPlaces) {
-                        const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
-                        if (d < 0.0005) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
-                            activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
-                        }
-                    }
-                }
+                prevTime = currTime;
 
                 // === DRAWING===
 
@@ -581,6 +618,26 @@
                     .addTo(map);
                 mapLayers.push(popupCircle);
             }
+            
+            // Draw Swimlane for Tracker
+            let swimlaneHtml = `
+                <div class="swimlane">
+                    <div class="swimlane-label" title="${trackerName}" style="color: ${color};">${trackerName.substring(0, 10)}</div>
+                    <div class="swimlane-track">
+            `;
+            
+            for (const block of trackerBlocks) {
+                let blockStart = Math.max(dayStart, block.start);
+                let blockEnd = Math.min(dayEnd, block.end);
+                if (blockStart < blockEnd) {
+                    const leftPct = ((blockStart - dayStart) / dayDuration) * 100;
+                    const widthPct = ((blockEnd - blockStart) / dayDuration) * 100;
+                    swimlaneHtml += `<div class="time-block" style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${block.color};" title="${block.title}"></div>`;
+                }
+            }
+            
+            swimlaneHtml += `</div></div>`;
+            swimlanesContainer.innerHTML += swimlaneHtml;
         }
 
         // Draw matched active places with distinct custom purple geotag markers
@@ -613,7 +670,7 @@
         // Rebuild Timeline Legend dynamically
         const legendContainer = document.querySelector('.timeline-legend');
         let legendHtml = '<div class="legend-item"><div class="legend-color" style="background: var(--no-info);"></div> No Signal</div>' + 
-                         '<div class="legend-item"><div class="legend-color" style="background: linear-gradient(to right, #e6194B40, #3cb44b40);"></div> Moving</div>';
+                         '<div class="legend-item"><div class="legend-color" style="background: var(--moving-info);"></div> Moving</div>';
         for (const place of activePlacesMap.values()) {
             const placeColor = getPlaceColor(place);
             const pName = place.name || `Rank #${place.rank || 'N/A'}`;
