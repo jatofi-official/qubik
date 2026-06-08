@@ -357,7 +357,8 @@ def api_social(date):
 def api_places():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM places ORDER BY significance DESC")
+    # Cutoof is set to 30 minutes. It should filter out many redundant points
+    cursor.execute("SELECT * FROM places WHERE significance > 30 ORDER BY significance DESC")
     places = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return jsonify(places)
