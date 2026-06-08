@@ -15,6 +15,63 @@ def index():
     return render_template('main.html')
 
 
+@app.route('/overview')
+def overview():
+    current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M GMT")
+    return render_template('overview.html', current_time=current_time)
+
+@app.route('/api/overview')
+def api_overview():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # KPIs
+    cursor.execute("SELECT COUNT(DISTINCT hashed_key) FROM tags WHERE hashed_key != ''")
+    monitored_tags = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM location_data")
+    total_pings = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM clean_location_data")
+    valid_pings = cursor.fetchone()[0]
+    health = round((valid_pings / total_pings) * 100, 1) if total_pings and total_pings > 0 else 0
+    cursor.execute("SELECT COUNT(*) FROM places WHERE significance > 60")
+    significant_places = cursor.fetchone()[0]
+
+    # Trends (Aggregated by day)
+    cursor.execute("SELECT DATE(time) as date, COUNT(*) as count FROM trips GROUP BY DATE(time) ORDER BY DATE(time)")
+    pings_over_time = [dict(row) for row in cursor.fetchall()]
+    cursor.execute("SELECT DATE(time) as date, COUNT(DISTINCT hashed_key) as count FROM trips GROUP BY DATE(time) ORDER BY DATE(time)")
+    active_tags_over_time = [dict(row) for row in cursor.fetchall()]
+
+    # Highlights
+    cursor.execute("SELECT MAX(velocity) FROM trips WHERE motion_state = 'MOVING'")
+    max_speed = cursor.fetchone()[0] or 0
+    cursor.execute("SELECT SUM(elevation_gain) FROM daily_stats")
+    elevation_gain = cursor.fetchone()[0] or 0
+    cursor.execute("SELECT SUM(time_spent) FROM trips WHERE motion_state = 'STATIONARY'")
+    stationary_minutes = cursor.fetchone()[0] or 0
+    stationary_days = round(stationary_minutes / (60 * 24), 1)
+
+    # Mode Split & Places
+    cursor.execute("SELECT transport_mode, SUM(distance) as count FROM trips WHERE transport_mode != 'UNKNOWN' GROUP BY transport_mode ORDER BY count DESC")
+    mode_split = [dict(row) for row in cursor.fetchall()]
+    cursor.execute("SELECT latitude, longitude, significance, unique_tags, is_overnight FROM places ORDER BY significance DESC LIMIT 10")
+    top_places = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    def format_number(num):
+        if num >= 1000000: return f"{num/1000000:.1f}M"
+        if num >= 1000: return f"{num/1000:.1f}k"
+        return str(num)
+
+    return jsonify({
+        "kpis": { "monitored_tags": monitored_tags, "valid_pings_formatted": format_number(valid_pings), "data_health": health, "significant_places": significant_places },
+        "trends": { "pings_over_time": pings_over_time, "active_tags_over_time": active_tags_over_time },
+        "highlights": { "max_speed": round(max_speed, 1), "elevation_gain": round(elevation_gain), "stationary_days": stationary_days },
+        "mode_split": mode_split,
+        "top_places": top_places
+    })
+
+
 @app.route('/individual')
 def individual_default():
     # Redirect to a default testing hash if none is provided

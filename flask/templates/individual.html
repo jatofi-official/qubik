@@ -63,6 +63,21 @@
         
         .brand p { font-size: 0.85rem; color: #94a3b8; }
 
+        .brand-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .home-link {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.2s;
+            margin-top: 2px;
+        }
+        .home-link:hover { color: white; }
+
         .control-group {
             display: flex;
             flex-direction: column;
@@ -238,9 +253,12 @@
     <div class="dashboard">
         
         <aside class="sidebar">
-            <div class="brand">
-                <h1>{{tracker_name}}</h1>
-                <p>Daily view</p>
+            <div class="brand-header">
+                <a href="/" class="home-link"><i class="fa-solid fa-arrow-left"></i></a>
+                <div class="brand">
+                    <h1>{{tracker_name}}</h1>
+                    <p>Daily view</p>
+                </div>
             </div>
 
             <div class="control-group">

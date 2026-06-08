@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overview</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --top-panel-bg: #0f172a;
+            --top-panel-text: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            
+            /* Overview Module Color */
+            --overview: #a855f7;       /* Purple */
+            --overview-light: #f3e8ff;
+            
+            --success: #10b981;        /* Green */
+            --border-radius: 12px;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* ================= TOP PANEL ================= */
+        .top-panel {
+            background-color: var(--top-panel-bg);
+            color: var(--top-panel-text);
+            padding: 40px 20px;
+            border-bottom: 4px solid var(--overview);
+        }
+
+        .top-panel-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .home-link {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .home-link:hover { color: white; }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--overview);
+            text-transform: uppercase;
+            padding: 6px 16px;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 20px;
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+
+        /* ================= MAIN CONTENT CONTAINER ================= */
+        .main-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+
+        .card-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        /* --- 1. GLOBAL KPIs --- */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-left: 4px solid var(--overview);
+        }
+
+        .kpi-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background-color: var(--overview-light);
+            color: var(--overview);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .kpi-data {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--top-panel-bg);
+            line-height: 1.2;
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Special coloring for Data Health KPI */
+        .health-good .kpi-icon { background-color: #ecfdf5; color: var(--success); }
+        .health-good .kpi-value { color: var(--success); }
+
+        /* --- 3. INSIGHTS SPLIT (Highlights & Mode Split) --- */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* Highlights List */
+        .stat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .stat-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        .stat-label i { color: var(--overview); width: 20px; text-align: center; }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--top-panel-bg);
+            font-size: 1.1rem;
+        }
+
+        /* --- 4. HUBS TABLE --- */
+        .hubs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .hubs-table th {
+            text-align: left;
+            padding: 12px;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .hubs-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .hubs-table tr:last-child td { border-bottom: none; }
+
+        .hub-id { font-family: monospace; color: var(--text-muted); background: #f1f5f9; padding: 2px 6px; border-radius: 4px;}
+        .hub-significance { font-weight: 600; color: var(--overview); }
+        .hub-tags { font-weight: 600; }
+        
+        .badge {
+            padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;
+        }
+        .badge-success { background-color: #ecfdf5; color: var(--success); }
+        .badge-muted { background-color: #f1f5f9; color: var(--text-muted); }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-panel">
+        <div class="top-panel-inner">
+            <div class="page-title">
+                <div class="brand-group">
+                    <a href="/" class="home-link"><i class="fa-solid fa-arrow-left"></i></a>
+                    <div class="brand"><i class="fa-solid fa-chart-pie"></i> Overview</div>
+                </div>
+                <h1>Overview</h1>
+                <p>Global KPIs, data health, derived from aggregated daily statistics. Includes places and mode of transport.</p>
+            </div>
+            <div style="text-align: right; color: #94a3b8; font-size: 0.9rem;">
+                Report Generated:<br>
+                <span style="color: white; font-weight: 600;">{{ current_time }}</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <section class="kpi-grid">
+            
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-user-tag"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-value" id="kpi-tags">-</span>
+                    <span class="kpi-label">Monitored Tags</span>
+                </div>
+            </div>
+
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-value" id="kpi-pings">-</span>
+                    <span class="kpi-label">Total Valid Pings</span>
+                </div>
+            </div>
+
+            <div class="card kpi-card health-good" id="kpi-health-card">
+                <div class="kpi-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-value" id="kpi-health">-</span>
+                    <span class="kpi-label">Global Data Health</span>
+                </div>
+            </div>
+
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-map-pin"></i></div>
+                <div class="kpi-data">
+                    <span class="kpi-value" id="kpi-places">-</span>
+                    <span class="kpi-label">Significant Places</span>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="charts-grid">
+            
+            <div class="card">
+                <div class="card-header">Valid Pings Per Day</div>
+                <div class="chart-container" style="height: 300px; position: relative;">
+                    <canvas id="pingsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Active Tags Per Day</div>
+                <div class="chart-container" style="height: 300px; position: relative;">
+                    <canvas id="tagsChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="insights-grid">
+            
+            <div class="card">
+                <div class="card-header">Highlights</div>
+                <div class="stat-list">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-gauge-high"></i> Max Recorded Speed</span>
+                        <span class="stat-value" id="hl-speed">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up"></i> Total Elevation Gain</span>
+                        <span class="stat-value" id="hl-elevation">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-stopwatch"></i> Total Stationary Time</span>
+                        <span class="stat-value" id="hl-stationary">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <div class="card-header" style="justify-content: center;">Distance covered by transport mode</div>
+                <div class="chart-container" style="height: 250px; position: relative; margin: 0 auto; width: 100%;">
+                    <canvas id="modeChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="card">
+            <div class="card-header">Fleet Hubs & Significant Places</div>
+            <table class="hubs-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Place</th>
+                        <th>Time spent</th>
+                        <th>Unique Tags Visited</th>
+                        <th>Overnight Stay Hub?</th>
+                    </tr>
+                </thead>
+                <tbody id="places-tbody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/overview');
+                const data = await response.json();
+
+                // Populate KPIs
+                document.getElementById('kpi-tags').innerText = data.kpis.monitored_tags;
+                document.getElementById('kpi-pings').innerText = data.kpis.valid_pings_formatted;
+                document.getElementById('kpi-health').innerText = data.kpis.data_health + '%';
+                document.getElementById('kpi-places').innerText = data.kpis.significant_places;
+
+                // Health color logic
+                const healthCard = document.getElementById('kpi-health-card');
+                if (data.kpis.data_health < 90) {
+                    healthCard.classList.remove('health-good');
+                    healthCard.style.borderLeftColor = '#ef4444';
+                    healthCard.querySelector('.kpi-icon').style.backgroundColor = '#fef2f2';
+                    healthCard.querySelector('.kpi-icon').style.color = '#ef4444';
+                    document.getElementById('kpi-health').style.color = '#ef4444';
+                }
+
+                // Populate Highlights
+                document.getElementById('hl-speed').innerText = data.highlights.max_speed + ' km/h';
+                document.getElementById('hl-elevation').innerText = data.highlights.elevation_gain.toLocaleString() + ' m';
+                document.getElementById('hl-stationary').innerText = data.highlights.stationary_days + ' days';
+
+                // Populate Top Places Table
+                const tbody = document.getElementById('places-tbody');
+                tbody.innerHTML = '';
+                data.top_places.forEach((place, index) => {
+                    const tr = document.createElement('tr');
+                    const badgeClass = place.is_overnight ? 'badge-success' : 'badge-muted';
+                    const badgeText = place.is_overnight ? 'Yes' : 'No';
+
+                    let hours = 0;
+                    let minutes = 0;
+                    hours = parseFloat(place.significance) / 60;
+                    minutes = parseFloat(place.significance) % 60;
+
+                    
+
+                    
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td><a href="https://www.google.com/maps?q=${place.latitude},${place.longitude}" target="_blank" class="hub-id">${place.latitude.toFixed(3)}, ${place.longitude.toFixed(3)}</a></td>
+                        <td class="hub-significance">${hours.toFixed(0)}h ${minutes.toFixed(0)}min</td>
+                        <td class="hub-tags">${place.unique_tags} tags</td>
+                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Charts
+                const commonOptions = { responsive: true, maintainAspectRatio: false };
+
+                // Pings Chart
+                new Chart(document.getElementById('pingsChart'), {
+                    type: 'bar',
+                    data: {
+                        datasets: [{
+                            label: 'Valid Pings',
+                            data: data.trends.pings_over_time.map(d => ({x: d.date, y: d.count})),
+                            borderColor: '#a855f7',
+                            backgroundColor: 'rgb(168, 85, 247)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { ...commonOptions, scales: { x: { type: 'time', time: { unit: 'day' } } } }
+                });
+
+                // Active Tags Chart
+                new Chart(document.getElementById('tagsChart'), {
+                    type: 'bar',
+                    data: {
+                        datasets: [{
+                            label: 'Active Tags',
+                            data: data.trends.active_tags_over_time.map(d => ({x: d.date, y: d.count})),
+                            backgroundColor: '#3b82f6',
+                        }]
+                    },
+                    options: { ...commonOptions, scales: { x: { type: 'time', time: { unit: 'day' } } } }
+                });
+
+                // Mode Split Chart
+                const modes = data.mode_split.map(d => d.transport_mode);
+                const modeCounts = data.mode_split.map(d => d.count/1000); //We want it in km
+                
+                const modeColors = modes.map(mode => {
+                    if (mode === 'STATIONARY') return '#94a3b8';
+                    if (mode === 'WALKING') return '#10b981';
+                    if (mode === 'RUNNING/CYCLING') return '#3b82f6';
+                    if (mode === 'DRIVING/TRAIN') return '#ef4444';
+                    return '#f59e0b';
+                });
+
+                new Chart(document.getElementById('modeChart'), {
+                    type: 'doughnut',
+                    data: { labels: modes, datasets: [{ data: modeCounts, backgroundColor: modeColors, borderWidth: 0 }] },
+                    options: { 
+                        ...commonOptions, 
+                        plugins: { 
+                            legend: { position: 'right' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' ' + context.label + ': ' + parseFloat(context.raw).toFixed(1) + ' km';
+                                    }
+                                }
+                            }
+                        } 
+                    }
+                });
+
+            } catch (err) {
+                console.error("Error loading overview data:", err);
+            }
+        });
+    </script>
+
+</body>
+</html>
