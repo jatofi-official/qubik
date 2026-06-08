@@ -1,11 +1,11 @@
 Project protocol
 
 Authors 
--------
+=======
 Jakub Samuel Hlavatý
 
 Submitted files
----------------
+===============
 This release branch includes all necessary files for setting up the server, filtering, analyzing and visualising data. It does not, however include tracker setup files, firmware and the docker setup.
 
 - Makefile: orchestrates database creation, filtering, trip generation, analysis, and Flask deployment for the project.
@@ -50,6 +50,9 @@ Flask
 - flask/templates/overview.html: overview dashboard page with chart and KPI panels for aggregated tracker analytics.
 - flask/templates/individual.html: individual tracker dashboard layout for viewing tracker activity by date.
 - flask/templates/social.html: social interaction page layout for viewing tracker activity by date.
+
+Running
+=======
 
 Installing packages
 -------------------
@@ -105,5 +108,21 @@ From this point we can run everything on the school server. I have set up a Make
 On the school computer we only need to run
 make
 make-deploy
+
+Resources
+=========
+I used numerous websites as resources, most notably geeksforgeeks, stackoverflow and GitHub. Due to the sheer amount of work on this project I cannot list every single forum or website used, but these two comprised the absolute biggest majority.
+
+
+I have used artificial intelligence when working on this project in the following way:
+- discussion of strategy and algorithms
+- command line help for setting up OpenHaystack
+- code debugging
+- creating the website layout
+- code editing and generation
+
+The most difficult parts (data-filtering and data collection backend) were done with little direct code generation, since that was the most important part of the project. The graph building math and dijkstra implementation were inspired by AI generated code. The rest of the project was more mixed.
+
+
 
 That is all. I have in total spent about ~30-50 hours on this project.
