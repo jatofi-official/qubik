@@ -77,6 +77,34 @@ def individual_default():
     # Redirect to a default testing hash if none is provided
     return redirect(url_for('individual', param='3nbbTczUGeECZYuKlFnCOP0gfuPBzTsMjxcbsGMrFuI='))
 
+
+
+@app.route('/social')
+def social_default():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT MAX(time) FROM trips")
+    res = cursor.fetchone()[0]
+    conn.close()
+    
+    latest_date = res.split(' ')[0] if res else datetime.today().strftime('%Y-%m-%d')
+    return redirect(url_for('social', date=latest_date))
+
+@app.route('/social/<string:date>')
+def social(date):
+    try:
+        current_date = datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        current_date = datetime(2026, 6, 6)
+        
+    prev_date = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_date = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    current_date_str = current_date.strftime('%Y-%m-%d')
+
+    raw_data = get_all_raw_data(current_date_str)
+
+    return render_template("social.html", target_date=current_date_str, prev_date=prev_date, next_date=next_date, raw_data=raw_data)
+
 @app.route('/individual/<path:param>') # We will parse params and then manually split them.
 def individual(param):
     parts = param.split('/')
@@ -262,6 +290,26 @@ def get_raw_data(hashed_key, date):
     conn.close()
     return raw_data
 
+def get_all_raw_data(date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT hashed_key, name FROM tags WHERE hashed_key != ''")
+    tags = cursor.fetchall()
+    conn.close()
+
+    all_data = {}
+    for tag in tags:
+        hk = tag['hashed_key']
+        data = get_raw_data(hk, date)
+        if data:
+            all_data[hk] = {
+                "name": tag['name'],
+                "data": data
+            }
+            
+    return all_data
+
+
 # Really smart solution that solves the issue of always reloading the page
 @app.route('/api/stats/<path:hashed_key>/<string:date>')
 def api_stats(hashed_key, date):
@@ -284,6 +332,35 @@ def api_stats(hashed_key, date):
         "daily": daily_stats,
         "raw_data": raw_data
     })
+
+@app.route('/api/social/<string:date>')
+def api_social(date):
+    try:
+        current_date = datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        current_date = datetime(2026, 6, 6)
+    
+    prev_date = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_date = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    current_date_str = current_date.strftime('%Y-%m-%d')
+
+    raw_data = get_all_raw_data(current_date_str)
+
+    return jsonify({
+        "current_date": current_date_str,
+        "prev_date": prev_date,
+        "next_date": next_date,
+        "raw_data": raw_data
+    })
+
+@app.route('/api/places')
+def api_places():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM places")
+    places = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(places)
 
 if __name__ == '__main__':
     app.run(debug=True)

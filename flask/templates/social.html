@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #f8fafc;
+            --sidebar-accent: #1e293b;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --social: #f43f5e; 
+            --border-radius: 12px;
+            --border-color: #e2e8f0;
+
+            /* Specific Place Colors for Mapping/Timeline */
+            --place-alpha: #a855f7; /* Purple */
+            --place-beta: #f59e0b;  /* Orange */
+            --place-gamma: #ec4899; /* Pink */
+            --moving-info: #bae6fd; /* Light blue for moving/active info */
+            --no-info: #e2e8f0;     /* Gray for no info */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            height: 100vh;
+        }
+
+        /* ================= LEFT SIDEBAR ================= */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .brand h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--social);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .brand p { font-size: 0.85rem; color: #94a3b8; }
+
+        .brand-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .home-link {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.2s;
+            margin-top: 2px;
+        }
+        .home-link:hover { color: white; }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--sidebar-accent);
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+
+        .date-nav button {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .date-nav button:hover { background-color: #334155; }
+        .date-nav .current-date { font-weight: 600; font-size: 0.95rem; }
+
+        /* Sidebar Stats */
+        .stats-section { display: flex; flex-direction: column; gap: 12px; }
+        .section-header { font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 700; border-bottom: 1px solid #334155; padding-bottom: 8px; letter-spacing: 0.5px; }
+        .stat-list { display: flex; flex-direction: column; gap: 12px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        .stat-row .stat-label { color: #cbd5e1; display: flex; align-items: center; gap: 10px; }
+        .stat-row .stat-label i { color: #ffffff; width: 16px; text-align: center; opacity: 0.9; }
+        .stat-row .stat-value { font-weight: 600; color: #ffffff; }
+
+        /* Proximity Alert Banner */
+        .alert-card {
+            background-color: var(--sidebar-accent);
+            border-left: 3px solid var(--social);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+        .alert-card strong { color: #ffffff; }
+        .alert-card .alert-time {
+            display: block; font-size: 0.75rem; color: var(--social); margin-top: 6px; font-weight: 600;
+        }
+
+        /* ================= RIGHT MAIN CONTENT ================= */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 24px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+            border-radius: 8px;
+            background-color: #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Shared Timeline Specifics */
+        .gantt-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .swimlane {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .swimlane-label {
+            width: 75px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .swimlane-track {
+            flex-grow: 1;
+            height: 28px;
+            background-color: var(--no-info); /* Default Gray = No info */
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* The blocks inside the timeline */
+        .time-block {
+            position: absolute;
+            height: 100%;
+        }
+
+        .block-moving { background-color: var(--moving-info); }
+        .block-place-alpha { background-color: var(--place-alpha); }
+        .block-place-beta { background-color: var(--place-beta); }
+        .block-place-gamma { background-color: var(--place-gamma); }
+
+        .gantt-axis {
+            display: flex;
+            margin-left: 87px;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 8px;
+            margin-top: auto;
+        }
+
+        /* Timeline Legend */
+        .timeline-legend {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            justify-content: center;
+            margin-top: -8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+        /* Bottom Row: Core Trajectory Map */
+        .core-map-card {
+            flex-grow: 1;
+            min-height: 400px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        
+        <aside class="sidebar">
+            <div class="brand-header">
+                <a href="/" class="home-link"><i class="fa-solid fa-arrow-left"></i></a>
+                <div class="brand">
+                    <h1>Social View</h1>
+                    <p>Tracker Proximity</p>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Analyzed Date</label>
+                <div class="date-nav">
+                    <button id="prev-btn" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span class="current-date" id="current-date-display">{{ target_date | default('2026-06-02') }}</span>
+                    <button id="next-btn" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="section-header">Daily Summary</div>
+                <div class="stat-list">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-satellite-dish"></i> Active Trackers</span>
+                        <span class="stat-value" id="val-active-trackers">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-map-pin"></i> Unique Locations</span>
+                        <span class="stat-value" id="val-unique-locations">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fa-solid fa-people-arrows"></i> Total Encounters</span>
+                        <span class="stat-value val-social" id="val-total-encounters">-</span>
+                    </div>
+                </div>
+            </div>
+
+
+        </aside>
+
+        <main class="main-content">
+            
+            <div class="card" style="height: 380px; flex-shrink: 0; margin-bottom: 24px;">
+                    <div class="card-header">
+                        <div class="card-header-left">
+                            <i class="fa-solid fa-sliders" style="color: var(--social);"></i> 
+                            Shared Timeline
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-legend">
+                        <div class="legend-item"><div class="legend-color" style="background: var(--no-info);"></div> No Signal</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--moving-info);"></div> Active Info</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--place-alpha);"></div> Node #2756</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--place-beta);"></div> Node #1102</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--place-gamma);"></div> Node #883</div>
+                    </div>
+
+                    <div class="gantt-container">
+                        
+                        <!-- JS Timeline Population Target -->
+                        <div id="swimlanes-container"></div>
+
+                        <div class="gantt-axis">
+                            <span>00:00</span>
+                            <span>06:00</span>
+                            <span>12:00</span>
+                            <span>18:00</span>
+                            <span>24:00</span>
+                        </div>
+
+                    </div>
+                </div>
+
+           <div class="card core-map-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-map-location-dot" style="color: var(--text-muted);"></i>
+                    Main map
+                </div>
+                <div id="map" class="map-container"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+
+        <script>
+    let rawData = {{ raw_data | tojson | safe }};
+
+    // Not optimal but oh well.
+    const trackerColors = [
+        '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
+        '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', 
+        '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000', 
+        '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'
+    ];
+
+    // --- 1. INITIALIZE MAP ---
+    const map = L.map('map').setView([48.14, 17.09], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    // --- HELPER: CALCULATE BEARING ---
+    // Returns the angle between two coordinates in degrees (0 = North, 90 = East)
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const dLng = (lng2 - lng1) * toRad;
+        const y = Math.sin(dLng) * Math.cos(lat2 * toRad);
+        const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+                  Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos(dLng);
+        const brng = Math.atan2(y, x) * toDeg;
+        return (brng + 360) % 360;
+    }
+
+    // Horrible coding convention to hardcode anything, but it is what it is...
+    const namedTrackerColors = {
+        "Prod1": "#e6194B",
+        "Shequanda": "#3cb44b",
+        "Jedediah": "#4363d8",
+        "Anežka": "#f58231",
+        "Benjamin": "#911eb4"
+    };
+
+    // --- HELPER: CONSISTENT TRACKER COLOR ---
+    // This way each tracker wil have the same color each day.
+    function getTrackerColor(trackerName, trackerHash) {
+        if (namedTrackerColors[trackerName]) {
+            return namedTrackerColors[trackerName];
+        }
+        
+        let hash = 0;
+        for (let i = 0; i < trackerHash.length; i++) {
+            hash = trackerHash.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return trackerColors[Math.abs(hash) % trackerColors.length];
+    }
+
+    let mapLayers = [];
+    let currentMapDate = '{{target_date}}';
+
+    let allPlaces = [];
+
+    // Fetch all known places
+    fetch('/api/places')
+        .then(res => res.json())
+        .then(data => {
+            allPlaces = data;
+            renderMap();
+        })
+        .catch(err => console.error("Error loading places:", err));
+
+    async function loadDateData(dateStr) {
+        try {
+            const response = await fetch(`/api/social/${dateStr}`);
+            const data = await response.json();
+            
+            // Update Headers
+            document.getElementById('current-date-display').innerText = data.current_date;
+            
+            // Update Buttons
+            document.getElementById('prev-btn').setAttribute('onclick', `loadDateData('${data.prev_date}')`);
+            document.getElementById('next-btn').setAttribute('onclick', `loadDateData('${data.next_date}')`);
+            
+            // Push URL state without refreshing the page
+            window.history.pushState({}, '', `/social/${data.current_date}`);
+            
+            // Update Map and Charts
+            currentMapDate = data.current_date;
+            rawData = data.raw_data;
+            
+            document.getElementById('val-active-trackers').innerText = Object.keys(rawData).length;
+            
+            renderMap();
+        } catch(err) {
+            console.error("Error loading date data:", err);
+        }
+    }
+
+    function renderMap() {
+        // Clear previous map layers
+        mapLayers.forEach(layer => map.removeLayer(layer));
+        mapLayers = [];
+
+        const allLatLngs = [];
+        const activePlacesMap = new Map();
+        
+        // Loop through each tracker independently
+        for (const trackerHash in rawData) {
+            const trackerInfo = rawData[trackerHash];
+            const trackerName = trackerInfo.name;
+            const trackerData = trackerInfo.data;
+            
+            const color = getTrackerColor(trackerName, trackerHash);
+
+            const maxIndex = Math.max(1, trackerData.length - 1); 
+
+            for (let i = 0; i < trackerData.length; i++) {
+                const ping = trackerData[i];
+                const currentPoint = [ping.lat, ping.lng];
+                allLatLngs.push(currentPoint);
+
+                const currentProgress = i / maxIndex;
+                const opacity = 0.2 + (0.8 * currentProgress);
+
+                if (i > 0) {
+                    const prevPoint = [trackerData[i-1].lat, trackerData[i-1].lng];
+                    
+                    let polylineOptions = { 
+                        color: color, 
+                        weight: 4, 
+                        opacity: opacity 
+                    };
+
+                    if (ping.motion_state === 'INIT') {
+                        polylineOptions.dashArray = '10, 10';
+                    }
+
+                    const polyline = L.polyline([prevPoint, currentPoint], polylineOptions).addTo(map);
+                    mapLayers.push(polyline);
+
+                    const bearing = calculateBearing(prevPoint[0], prevPoint[1], currentPoint[0], currentPoint[1]);
+                    const midLat = (prevPoint[0] + currentPoint[0]) / 2;
+                    const midLng = (prevPoint[1] + currentPoint[1]) / 2;
+
+                    const arrowSvg = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="transform: rotate(${bearing}deg);">
+                            <path d="M12 2L22 20L12 16L2 20L12 2Z" fill="${color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+                        </svg>
+                    `;
+
+                    const arrowIcon = L.divIcon({
+                        className: 'custom-arrow-icon',
+                        html: arrowSvg,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+
+                    const marker = L.marker([midLat, midLng], { icon: arrowIcon, opacity: opacity, interactive: false }).addTo(map);
+                    mapLayers.push(marker);
+                }
+
+                // Check if stationary and map to a known place within x meters
+                if (ping.mode === 'STATIONARY') {
+                    for (const place of allPlaces) {
+                        const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
+                        if (d < 0.001) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
+                            activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
+                        }
+                    }
+                }
+
+                // === DRAWING===
+
+                let pointRadius = ping.mode === 'STATIONARY' ? Math.min(25, 6 + (ping.time_spent * 0.05)) : 6;
+                
+                const circle = L.circleMarker(currentPoint, { 
+                    radius: pointRadius, 
+                    fillColor: color, 
+                    color: '#fff', 
+                    weight: 1, 
+                    fillOpacity: opacity,
+                    opacity: opacity 
+                }).addTo(map);
+                mapLayers.push(circle);
+                
+                let displayVelocity = ping.mode === 'STATIONARY' ? 0.00 : ping.velocity;
+                const velocityStr = displayVelocity !== null ? parseFloat(displayVelocity).toFixed(2) + ' km/h' : 'N/A';
+                const distanceStr = ping.distance !== null ? parseFloat(ping.distance).toFixed(2) + ' m' : 'N/A';
+                const timeSpentStr = ping.time_spent !== null ? parseFloat(ping.time_spent).toFixed(2) + ' min' : 'N/A';
+                const elevationStr = ping.elevation !== null ? parseFloat(ping.elevation).toFixed(2) + ' m' : 'N/A';
+                const timeStr = new Date(ping.timestamp).toLocaleString();
+
+                const popupCircle = L.circleMarker(currentPoint, { radius: 25, fillColor: 'transparent', color: 'transparent', weight: 0, fillOpacity: 0 })
+                    .bindPopup(`<b>Tracker: ${trackerName}</b><br>Time: <b>${timeStr}</b><br>Mode: <b>${ping.mode}</b><br>Velocity: ${velocityStr}<br>Distance: ${distanceStr}<br>Time Spent: ${timeSpentStr}<br>Elevation: ${elevationStr}`)
+                    .addTo(map);
+                mapLayers.push(popupCircle);
+            }
+        }
+
+        // Draw matched active places with distinct custom purple geotag markers
+        for (const place of activePlacesMap.values()) {
+            const placeHtml = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="28" height="36" style="filter: drop-shadow(0px 4px 2px rgba(0,0,0,0.4));">
+                    <path fill="#a855f7" stroke="#ffffff" stroke-width="12" d="M172.3 501.7C27 291 0 269.4 0 192 0 86 86 0 192 0s192 86 192 192c0 77.4-27 99-172.3 309.7-9.5 13.8-29.9 13.8-39.5 0zM192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80-80 35.8-80 80 35.8 80 80 80z"/>
+                </svg>
+            `;
+            const placeIcon = L.divIcon({
+                className: 'custom-place-icon',
+                html: placeHtml,
+                iconSize: [28, 36],
+                iconAnchor: [14, 36],
+                popupAnchor: [0, -36]
+            });
+
+            const marker = L.marker([place.latitude, place.longitude], { icon: placeIcon, zIndexOffset: 1000 }).addTo(map);
+            const pName = place.name || `Node #${place.id || 'N/A'}`;
+            marker.bindPopup(`<b><i class="fa-solid fa-map-pin" style="color: #a855f7;"></i> ${pName}</b><br>Significance: ${place.significance || 'Unknown'}`);
+            mapLayers.push(marker);
+            allLatLngs.push([place.latitude, place.longitude]);
+        }
+
+        if (allLatLngs.length > 0) {
+            map.fitBounds(L.latLngBounds(allLatLngs), { padding: [50, 50] });
+        }
+
+    }
+    
+    // Fire immediately on template load
+    document.getElementById('prev-btn').setAttribute('onclick', `loadDateData('{{ prev_date }}')`);
+    document.getElementById('next-btn').setAttribute('onclick', `loadDateData('{{ next_date }}')`);
+    document.getElementById('val-active-trackers').innerText = Object.keys(rawData).length;
+    renderMap();
+    </script>
+
+
+</body>
+</html>
