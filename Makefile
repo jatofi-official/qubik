@@ -4,6 +4,7 @@ USER = root
 PASSWORD = ""
 DATABASE = tag_tracker
 HOST = localhost
+PORT = 7777
 
 .PHONY: all pipeline clean deploy create-db clean-pipeline-db analysis
 
@@ -53,4 +54,6 @@ clean-analysis-db: $(RELEASE_DB)
 
 
 deploy: analysis
-	cd flask  && export FLASK_APP=main.py && flask run --port=7777
+	cd flask  && export FLASK_APP=main.py && flask run --port=$(PORT)
+
+

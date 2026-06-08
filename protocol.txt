@@ -1,15 +1,109 @@
-## Used commands:
+Project protocol
 
-sqlite3 largeDB.db < create_database_sqlite.sql 
+Authors 
+-------
+Jakub Samuel Hlavatý
 
-python mysql-to-sqlite-dump.py "root" "" -v
+Submitted files
+---------------
+This release branch includes all necessary files for setting up the server, filtering, analyzing and visualising data. It does not, however include tracker setup files, firmware and the docker setup.
 
-sqlite3 ../largeDB.db "DELETE FROM location_data"
+- Makefile: orchestrates database creation, filtering, trip generation, analysis, and Flask deployment for the project.
+- python_packages_release.txt: list of python packaged necessary to run this 
+- .gitignore: ignores local secrets, environment files, and generated caches/resources.
+
+Database:
+- create_database_mysql.sql: MySQL schema for tags and raw location_data ingestion.
+- create_database_sqlite.sql: SQLite schema equivalent for tags and location_data ingestion.
+- largeDB.db: SQLite database containing the imported raw tracker data used by the processing pipeline. Normally created by pipeline, present only on release.
+
+Data collecting
+These files are not executable on the school server. I have however kept them here since they took me a long time to make.
+- data-collecting/fetch_all.sh: wrapper that fetches location data for all trackers and inserts it into the database.
+- data-collecting/fetch_tag_locations.py: decrypts macless-haystack tracker payloads and outputs location JSON for a given tracker. This script was largely copied from OpenHaystack
+- data-collecting/insert_tag.py: reads JSON location records from stdin and inserts them into MySQL location_data while avoiding duplicates.
+- data-collecting/register_all.sh: wrapper that registers all trackers from keys.txt in the MySQL tags table.
+- data-collecting/register_tag.py: registers or ignores a tracker in MySQL tags by name and hashed public key.
+- data-collecting/db.txt: DB credentials, local only
+- data-collecting/keys.txt: Tracker keys, local only
+
+Processing
+
+Data processing
+- processing-scripts/data-filtering.py: cleans raw location_data into filtered points with anchors, motion state detection, and stationary grouping.
+- processing-scripts/elevation_module.py: elevation lookup wrapper using rasterio to sample elevation values from a GeoTIFF.
+- processing-scripts/generate-trips.py: converts cleaned points into trip and place records, labels transport mode, and adds elevation.
+- processing-scripts/mysql-to-sqlite-dump.py: migrates MySQL tags and location_data into SQLite while converting UTC timestamps to CET.
+- processing-scripts/output.txt: example debug output from a data-filtering run showing processing progress and anchor selection.
+
+Elevation
+- topography_resources/lookup.py: DEM test script validating rasterio elevation sampling from the project GeoTIFF.
+
+Analysis
+- analysis/analyze_distributions.py: generates distribution plots and normal-fit visualizations from aggregated daily trip metrics.
+- analysis/daily_analysis.py: computes and stores daily statistics from trips, including pings, elevation, speed, and stationary time.
+- analysis/daily_mobility_distributions.png: generated visualization output from the daily analysis script.
+
+Flask
+- flask/main.py: Flask backend serving overview, individual tracker, and social dashboard views from SQLite analytics.
+- flask/templates/main.html: homepage UI with navigation cards for overview, individual tracker, and social views. Also includes hardcoded bookmarks for interesting pages.
+- flask/templates/overview.html: overview dashboard page with chart and KPI panels for aggregated tracker analytics.
+- flask/templates/individual.html: individual tracker dashboard layout for viewing tracker activity by date.
+- flask/templates/social.html: social interaction page layout for viewing tracker activity by date.
+
+Installing packages
+-------------------
+This project uses multiple python packages. To make sure they are all installed we will create a venv and install them.
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r python_packages_release.txt
+
+When testing on the school server, creating a venv is not possible without a debian package. This is the solution
+wget https://bootstrap.pypa.io/virtualenv.pyz
+python3 virtualenv.pyz .venv
+
+Also due to hardware incompatibility, we need to install a numpy version <2.0. I have not included this in the package list, since this is just a specific issue.
+pip uninstall numpy
+pip install "numpy<2.0.0"
+
+Running backend
+---------------
+This part will not be performed on the school server, since it is tedious and requires personal login information and sudo. In order to set up the data collecting backend, it is first necessary to set up macless-haystack. The process is described in the report, as well as on the project repo (https://github.com/dchristl/macless-haystack). Afterwards we need to flash the custom firmware onto our tags. This returns three keys (private used for decrypting, public and hashed public used for retrieving data). We need to fill data-collecting/keys.txt with the following schema:
+
+public_key private_key name_of_tag
 
 
-Running flask:
-export FLASK_APP=main.py
+Next we will have to set up MySQL and save the login information into db.txt. We will use create_database_mysql.sql to create the database and tables (tags and location_data - individual data points)
 
-export FLASK_ENV=development 
+Then while running macless-haystack in the background we run ./data-collecting/register_all.sh inside our venv. That will register all our keys. Next we can run 
+./data-collecting/fetch_all.sh 
 
-flask run --port=7777
+This script reads all keys, runs data-collecting/fetch_tag_location.py with the keys and uses that output to the collected data points into the database using insert_tag.py. We can set up cron to schedule automatic fetching every few minutes, depending on our advertising frequency set in the firmware.
+
+That is everything necessary for data collection
+
+Running on home server
+----------------------
+After we have collected enough data, we will have to export it from MySQL to a sqlite file. We can do this with
+python3 processing-scripts/mysql-to-sqlite-dump.py using arguments user password. There are some optional arguments in case a setup is different. This will create a sqlite3 database, by default largeDB.db as specified in the submitted files.
+
+
+Running on school server
+------------------------
+
+From this point we can run everything on the school server. I have set up a Makefile that does most of the work, so if you're interested in what exactly we run I highly recommend checking it out. In short the Makefile has four major rules:
+
+!DO NOT RUN
+- create-db: Creates the database, first removes local *.db files, then does what was described in the previous section. DO NOT RUN, since we don't have live data to replace what we cleaned. This will not work on the school server
+
+- pipeline: Main processing pipeline. Every command is run in processing-scripts. First it filters data points using data-filtering.py. It is highly complex and has is described in the report. Then it runs generate_trips.py, which aggregates stationary points, recalculates distances and velocity, categorizes points based on velocity, adds elevation and creates frequently visited places, all using the previously filtered data. It takes the first topographic data file from topography_resources/*.tif. 
+
+- analysis: Cleans previously analysed tables and runs analysis/daily_analysis.py. It copies the database largeDB as releaseDB. This is done to allow for potential manual editing of individual rows. But since the focus of my work has been to mostly create tools than perfect datasets, I have not done it. 
+
+- deploy: Runs analysis (in order to always have analysed data inside the release db). Then it deploys the flask on a port. 
+
+On the school computer we only need to run
+make
+make-deploy
+
+That is all. I have in total spent about ~30-50 hours on this project.

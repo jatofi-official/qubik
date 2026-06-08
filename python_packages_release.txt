@@ -1,0 +1,11 @@
+cryptography
+Flask
+matplotlib
+mysql-connector-python
+numpy
+pandas
+pytz
+rasterio
+requests
+scipy
+seaborn
