@@ -210,7 +210,7 @@
         #swimlanes-container {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
         }
 
         .swimlane {
@@ -309,14 +309,6 @@
                     <div class="stat-row">
                         <span class="stat-label"><i class="fa-solid fa-satellite-dish"></i> Active Trackers</span>
                         <span class="stat-value" id="val-active-trackers">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fa-solid fa-map-pin"></i> Unique Locations</span>
-                        <span class="stat-value" id="val-unique-locations">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fa-solid fa-people-arrows"></i> Total Encounters</span>
-                        <span class="stat-value val-social" id="val-total-encounters">-</span>
                     </div>
                 </div>
             </div>
@@ -434,14 +426,41 @@
         "HQ": "#a855f7",
         "Warehouse": "#f59e0b"
     };
-    const placeColors = [
-        '#a855f7', '#f59e0b', '#ec4899', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f43f5e', '#8b5cf6', '#d946ef'
+
+    const placeColorsPalette = [
+        '#a855f7', '#f59e0b', '#ec4899', '#10b981', '#3b82f6', 
+        '#ef4444', '#14b8a6', '#f43f5e', '#8b5cf6', '#d946ef',
+        '#06b6d4', '#84cc16', '#eab308', '#f97316', '#6366f1',
+        '#0ea5e9', '#22c55e', '#be123c', '#4338ca', '#047857',
+        '#9d174d', '#1e40af', '#166534', '#854d0e', '#78350f',
+        '#172554', '#4c1d95', '#831843', '#701a75', '#3f6212'
     ];
+
+    let dynamicPlaceColors = new Map();
+    let placeColorIndex = 0;
+
     function getPlaceColor(place) {
         if (place.name && namedPlaceColors[place.name]) {
             return namedPlaceColors[place.name];
         }
-        return placeColors[(place.rank || 1) % placeColors.length];
+        
+        const placeKey = place.id || place.rank;
+        if (dynamicPlaceColors.has(placeKey)) {
+            return dynamicPlaceColors.get(placeKey);
+        }
+        
+        const color = placeColorsPalette[placeColorIndex % placeColorsPalette.length];
+        placeColorIndex++;
+        dynamicPlaceColors.set(placeKey, color);
+        
+        return color;
+    }
+
+    function renderAll() {
+        dynamicPlaceColors.clear();
+        placeColorIndex = 0;
+        renderMap();
+        renderTimeline();
     }
 
     let mapLayers = [];
@@ -459,8 +478,7 @@
                 place.rank = index + 1;
                 return place;
             });
-            renderMap();
-            renderTimeline();
+            renderAll();
         })
         .catch(err => console.error("Error loading places:", err));
 
@@ -485,8 +503,7 @@
             
             document.getElementById('val-active-trackers').innerText = Object.keys(rawData).length;
             
-            renderMap();
-            renderTimeline();
+            renderAll();
         } catch(err) {
             console.error("Error loading date data:", err);
         }
@@ -588,7 +605,7 @@
                 const timeStr = new Date(ping.timestamp).toLocaleString();
 
                 const popupCircle = L.circleMarker(currentPoint, { radius: 25, fillColor: 'transparent', color: 'transparent', weight: 0, fillOpacity: 0 })
-                    .bindPopup(`<b>Tracker: ${trackerName}</b><br>Time: <b>${timeStr}</b><br>Mode: <b>${ping.mode}</b><br>Velocity: ${velocityStr}<br>Distance: ${distanceStr}<br>Time Spent: ${timeSpentStr}<br>Elevation: ${elevationStr}`)
+                    .bindPopup(`<b>Tracker: ${trackerName}</b><br>Time: <b>${timeStr}</b><br>Mode: <b>${ping.mode}</b><br>Velocity: ${velocityStr}<br>Distance: ${distanceStr}<br>Time Spent: ${Math.floor((ping.time_spent || 0) / 60)} h ${Math.round(ping.time_spent || 0) % 60} min<br>Elevation: ${elevationStr}`)
                     .addTo(map);
                 mapLayers.push(popupCircle);
             }
@@ -713,8 +730,7 @@
     document.getElementById('prev-btn').setAttribute('onclick', `loadDateData('{{ prev_date }}')`);
     document.getElementById('next-btn').setAttribute('onclick', `loadDateData('{{ next_date }}')`);
     document.getElementById('val-active-trackers').innerText = Object.keys(rawData).length;
-    renderMap();
-    renderTimeline();
+    renderAll();
     </script>
 
 
