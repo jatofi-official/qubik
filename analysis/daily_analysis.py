@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS daily_stats (
     pings INTEGER,
     valid INTEGER,
     rejected INTEGER,
-    max_speed TEXT,
-    min_elevation TEXT,
-    max_elevation TEXT,
+    max_speed REAL,
+    min_elevation INTEGER,
+    max_elevation INTEGER,
     elevation_gain REAL,
     minutes_stationary INTEGER
 )
@@ -151,8 +151,8 @@ def get_daily_stats(hashed_key, date):
 
     conn.close()
 
-    if min_elevation == float('inf'): min_elevation = "-"
-    if max_elevation == float('-inf'): max_elevation = "-"
+    if min_elevation == float('inf'): min_elevation = None
+    if max_elevation == float('-inf'): max_elevation = None
 
     elevation_gain = 0
     for i in range(1, len(elevations)):
@@ -164,9 +164,9 @@ def get_daily_stats(hashed_key, date):
         "pings": total_pings,
         "valid": valid_pings,
         "rejected": rejected_pings,
-        "max_speed": f"{round(max_speed, 1)} km/h",
-        "min_elevation": f"{min_elevation} m",
-        "max_elevation": f"{max_elevation} m",
+        "max_speed": round(max_speed, 1),
+        "min_elevation": min_elevation,
+        "max_elevation": max_elevation,
         "elevation_gain": round(elevation_gain),
         "minutes_stationary": int(total_stationary_minutes)
     }

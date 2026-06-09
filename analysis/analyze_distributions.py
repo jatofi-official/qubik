@@ -38,15 +38,16 @@ def main():
     # 1. SQL Query to aggregate daily metrics
     query = """
         SELECT 
-            DATE(time) AS date,
-            COUNT(*) AS valid_pings,
-            MAX(velocity) AS max_speed,
-            MIN(elevation) AS min_elevation,
-            MAX(elevation) AS max_elevation,
-            (MAX(elevation) - MIN(elevation)) AS elevation_gain,
-            SUM(CASE WHEN motion_state = 'STATIONARY' THEN time_spent ELSE 0 END) AS minutes_stationary
-        FROM trips
-        GROUP BY DATE(time)
+            date,
+            SUM(valid) AS valid_pings,
+            MAX(max_speed) AS max_speed,
+            MIN(min_elevation) AS min_elevation,
+            MAX(max_elevation) AS max_elevation,
+            SUM(elevation_gain) AS elevation_gain,
+            SUM(minutes_stationary) AS minutes_stationary
+        FROM daily_stats
+        WHERE valid IS NOT NULL
+        GROUP BY date
     """
     
     # Load to DataFrame

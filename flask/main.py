@@ -223,9 +223,9 @@ def get_daily_stats(hashed_key, date):
             "pings": row["pings"],
             "valid": row["valid"],
             "rejected": row["rejected"],
-            "max_speed": row["max_speed"],
-            "min_elevation": row["min_elevation"],
-            "max_elevation": row["max_elevation"],
+            "max_speed": f"{row['max_speed']} km/h" if row['max_speed'] is not None else "0 km/h",
+            "min_elevation": f"{row['min_elevation']} m" if row['min_elevation'] is not None else "-",
+            "max_elevation": f"{row['max_elevation']} m" if row['max_elevation'] is not None else "-",
             "elevation_gain": row["elevation_gain"],
             "hours_stationary": row["minutes_stationary"] // 60,
             "minutes_stationary": row["minutes_stationary"] % 60
