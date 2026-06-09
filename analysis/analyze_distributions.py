@@ -38,16 +38,14 @@ def main():
     # 1. SQL Query to aggregate daily metrics
     query = """
         SELECT 
-            date,
-            SUM(valid) AS valid_pings,
-            MAX(max_speed) AS max_speed,
-            MIN(min_elevation) AS min_elevation,
-            MAX(max_elevation) AS max_elevation,
-            SUM(elevation_gain) AS elevation_gain,
-            SUM(minutes_stationary) AS minutes_stationary
+            valid AS valid_pings,
+            max_speed,
+            min_elevation,
+            max_elevation,
+            elevation_gain,
+            minutes_stationary
         FROM daily_stats
         WHERE valid IS NOT NULL
-        GROUP BY date
     """
     
     # Load to DataFrame
@@ -77,12 +75,12 @@ def main():
     ]
     
     titles = [
-        'Valid Pings per Day', 
-        'Max Speed per Day (km/h)', 
-        'Min Elevation per Day (m)',
-        'Max Elevation per Day (m)', 
-        'Elevation Gain per Day (m)', 
-        'Minutes Stationary per Day'
+        'Valid Pings per Tracker per Day', 
+        'Max Speed per Tracker per Day (km/h)', 
+        'Min Elevation per Tracker per Day (m)',
+        'Max Elevation per Tracker per Day (m)', 
+        'Elevation Gain per Tracker per Day (m)', 
+        'Minutes Stationary per Tracker per Day'
     ]
     
     # Create 2x3 grid of subplots
