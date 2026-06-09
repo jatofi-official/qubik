@@ -688,6 +688,13 @@
                     } else {
                         trackerBlocks.push({ start: prevTime, end: currTime, color: 'var(--moving-info)', title: 'Moving' });
                     }
+                } else {
+                    if (ping.mode === 'STATIONARY' && (ping.time_spent || 0) > 0) {
+                        const actualStart = currTime - (ping.time_spent * 60000);
+                        let bColor = matchedPlace ? getPlaceColor(matchedPlace) : 'var(--moving-info)';
+                        let bTitle = matchedPlace ? (matchedPlace.name || `Rank #${matchedPlace.rank}`) : 'Stationary (Unknown)';
+                        trackerBlocks.push({ start: actualStart, end: currTime, color: bColor, title: bTitle });
+                    }
                 }
                 prevTime = currTime;
             }
