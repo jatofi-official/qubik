@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
         :root {
@@ -467,11 +468,19 @@
 
                 new Chart(document.getElementById('modeChart'), {
                     type: 'doughnut',
+                    plugins: [ChartDataLabels],
                     data: { labels: modes, datasets: [{ data: modeCounts, backgroundColor: modeColors, borderWidth: 0 }] },
                     options: { 
                         ...commonOptions, 
                         plugins: { 
                             legend: { position: 'right' },
+                            datalabels: {
+                                color: '#ffffff',
+                                font: { weight: 'bold' },
+                                formatter: function(value, context) {
+                                    return value > 20 ? parseFloat(value).toFixed(1) + ' km' : '';
+                                }
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {

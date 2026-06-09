@@ -18,7 +18,6 @@ sqlite_cursor = sqlite_connection.cursor()
 engine = ElevationLookup(args.topo_data)
 
 # CONSTANTS
-WALKING_MIN_SPEED = 2
 WALKING_MAX_SPEED = 5
 CYCLING_MAX_SPEED = 15
 STATIONARY_MERGE_RADIUS = 100  # meters
@@ -177,7 +176,7 @@ def generate_trips():
             distance = get_distance((prev_row_data["lat"], prev_row_data["lon"]),(lat, lon))
             velocity = (distance / 1000) / (delta_seconds / 3600) if delta_seconds > 0 else 0
 
-            if orig_motion_state == "STATIONARY" or velocity < WALKING_MIN_SPEED:
+            if orig_motion_state == "STATIONARY":
                 time_spent = delta_seconds / 60
                 matched_cluster = None
                 min_dist = STATIONARY_MERGE_RADIUS

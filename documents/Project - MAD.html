@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)https://fmfi-compbio.github.io/mad/notes/Project.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+<link rel="stylesheet" href="./Project - MAD_files/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <!-- Fontawesome icons -->
+<link rel="stylesheet" href="./Project - MAD_files/all.min.css">
+
+  <!-- Custom stylesheets -->
+<link rel="stylesheet" href="./Project - MAD_files/admonitions.css">
+<link rel="stylesheet" href="./Project - MAD_files/syntax.css">
+
+  <!-- Favicon -->
+<link rel="shortcut icon" href="./Project - MAD_files/Logo.png">
+
+
+
+<!-- Page title -->
+<title>Project - MAD</title>
+
+<!-- MathJax config -->
+<script>
+    MathJax = {
+      tex: {
+        inlineMath: [
+          ["$", "$"],
+          ["\\(", "\\)"],
+        ],
+      },
+      svg: {
+        fontCache: "global",
+      },
+    };
+</script>
+
+<!-- load MathJax -->
+<script type="text/javascript" id="MathJax-script" async="" src="./Project - MAD_files/tex-mml-chtml.js"></script>
+
+
+<!-- JS dependencies (Bootstrap 4) -->
+<script src="./Project - MAD_files/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="./Project - MAD_files/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="./Project - MAD_files/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script><style>.lottie-animation-container{width:var(--lottie-animation-container-width);height:var(--lottie-animation-container-height);background-color:var(--lottie-animation-container-background-color);overflow:hidden;margin:var(--lottie-animation-margin)}.lottie-animation-container svg{transform:scale(var(--lottie-animation-scale))}</style><style>.lottie-animation-container{width:var(--lottie-animation-container-width);height:var(--lottie-animation-container-height);background-color:var(--lottie-animation-container-background-color);overflow:hidden;margin:var(--lottie-animation-margin)}.lottie-animation-container svg{transform:scale(var(--lottie-animation-scale))}</style><style type="text/css">.CtxtMenu_InfoClose {  top:.2em; right:.2em;}
+.CtxtMenu_InfoContent {  overflow:auto; text-align:left; font-size:80%;  padding:.4em .6em; border:1px inset; margin:1em 0px;  max-height:20em; max-width:30em; background-color:#EEEEEE;  white-space:normal;}
+.CtxtMenu_Info.CtxtMenu_MousePost {outline:none;}
+.CtxtMenu_Info {  position:fixed; left:50%; width:auto; text-align:center;  border:3px outset; padding:1em 2em; background-color:#DDDDDD;  color:black;  cursor:default; font-family:message-box; font-size:120%;  font-style:normal; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 15px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius:15px;               /* Safari and Chrome */  -moz-border-radius:15px;                  /* Firefox */  -khtml-border-radius:15px;                /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */  filter:progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color="gray", Positive="true"); /* IE */}
+</style><style type="text/css">.CtxtMenu_MenuClose {  position:absolute;  cursor:pointer;  display:inline-block;  border:2px solid #AAA;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  font-family: "Courier New", Courier;  font-size:24px;  color:#F0F0F0}
+.CtxtMenu_MenuClose span {  display:block; background-color:#AAA; border:1.5px solid;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  line-height:0;  padding:8px 0 6px     /* may need to be browser-specific */}
+.CtxtMenu_MenuClose:hover {  color:white!important;  border:2px solid #CCC!important}
+.CtxtMenu_MenuClose:hover span {  background-color:#CCC!important}
+.CtxtMenu_MenuClose:hover:focus {  outline:none}
+</style><style type="text/css">.CtxtMenu_Menu {  position:absolute;  background-color:white;  color:black;  width:auto; padding:5px 0px;  border:1px solid #CCCCCC; margin:0; cursor:default;  font: menu; text-align:left; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 5px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius: 5px;             /* Safari and Chrome */  -moz-border-radius: 5px;                /* Firefox */  -khtml-border-radius: 5px;              /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */}
+.CtxtMenu_MenuItem {  padding: 1px 2em;  background:transparent;}
+.CtxtMenu_MenuArrow {  position:absolute; right:.5em; padding-top:.25em; color:#666666;  font-family: null; font-size: .75em}
+.CtxtMenu_MenuActive .CtxtMenu_MenuArrow {color:white}
+.CtxtMenu_MenuArrow.CtxtMenu_RTL {left:.5em; right:auto}
+.CtxtMenu_MenuCheck {  position:absolute; left:.7em;  font-family: null}
+.CtxtMenu_MenuCheck.CtxtMenu_RTL { right:.7em; left:auto }
+.CtxtMenu_MenuRadioCheck {  position:absolute; left: .7em;}
+.CtxtMenu_MenuRadioCheck.CtxtMenu_RTL {  right: .7em; left:auto}
+.CtxtMenu_MenuInputBox {  padding-left: 1em; right:.5em; color:#666666;  font-family: null;}
+.CtxtMenu_MenuInputBox.CtxtMenu_RTL {  left: .1em;}
+.CtxtMenu_MenuComboBox {  left:.1em; padding-bottom:.5em;}
+.CtxtMenu_MenuSlider {  left: .1em;}
+.CtxtMenu_SliderValue {  position:absolute; right:.1em; padding-top:.25em; color:#333333;  font-size: .75em}
+.CtxtMenu_SliderBar {  outline: none; background: #d3d3d3}
+.CtxtMenu_MenuLabel {  padding: 1px 2em 3px 1.33em;  font-style:italic}
+.CtxtMenu_MenuRule {  border-top: 1px solid #DDDDDD;  margin: 4px 3px;}
+.CtxtMenu_MenuDisabled {  color:GrayText}
+.CtxtMenu_MenuActive {  background-color: #606872;  color: white;}
+.CtxtMenu_MenuDisabled:focus {  background-color: #E8E8E8}
+.CtxtMenu_MenuLabel:focus {  background-color: #E8E8E8}
+.CtxtMenu_ContextMenu:focus {  outline:none}
+.CtxtMenu_ContextMenu .CtxtMenu_MenuItem:focus {  outline:none}
+.CtxtMenu_SelectionMenu {  position:relative; float:left;  border-bottom: none; -webkit-box-shadow:none; -webkit-border-radius:0px; }
+.CtxtMenu_SelectionItem {  padding-right: 1em;}
+.CtxtMenu_Selection {  right: 40%; width:50%; }
+.CtxtMenu_SelectionBox {  padding: 0em; max-height:20em; max-width: none;  background-color:#FFFFFF;}
+.CtxtMenu_SelectionDivider {  clear: both; border-top: 2px solid #000000;}
+.CtxtMenu_Menu .CtxtMenu_MenuClose {  top:-10px; left:-10px}
+</style><style id="MJX-CHTML-styles">
+mjx-container[jax="CHTML"] {
+  line-height: 0;
+}
+
+mjx-container [space="1"] {
+  margin-left: .111em;
+}
+
+mjx-container [space="2"] {
+  margin-left: .167em;
+}
+
+mjx-container [space="3"] {
+  margin-left: .222em;
+}
+
+mjx-container [space="4"] {
+  margin-left: .278em;
+}
+
+mjx-container [space="5"] {
+  margin-left: .333em;
+}
+
+mjx-container [rspace="1"] {
+  margin-right: .111em;
+}
+
+mjx-container [rspace="2"] {
+  margin-right: .167em;
+}
+
+mjx-container [rspace="3"] {
+  margin-right: .222em;
+}
+
+mjx-container [rspace="4"] {
+  margin-right: .278em;
+}
+
+mjx-container [rspace="5"] {
+  margin-right: .333em;
+}
+
+mjx-container [size="s"] {
+  font-size: 70.7%;
+}
+
+mjx-container [size="ss"] {
+  font-size: 50%;
+}
+
+mjx-container [size="Tn"] {
+  font-size: 60%;
+}
+
+mjx-container [size="sm"] {
+  font-size: 85%;
+}
+
+mjx-container [size="lg"] {
+  font-size: 120%;
+}
+
+mjx-container [size="Lg"] {
+  font-size: 144%;
+}
+
+mjx-container [size="LG"] {
+  font-size: 173%;
+}
+
+mjx-container [size="hg"] {
+  font-size: 207%;
+}
+
+mjx-container [size="HG"] {
+  font-size: 249%;
+}
+
+mjx-container [width="full"] {
+  width: 100%;
+}
+
+mjx-box {
+  display: inline-block;
+}
+
+mjx-block {
+  display: block;
+}
+
+mjx-itable {
+  display: inline-table;
+}
+
+mjx-row {
+  display: table-row;
+}
+
+mjx-row > * {
+  display: table-cell;
+}
+
+mjx-mtext {
+  display: inline-block;
+}
+
+mjx-mstyle {
+  display: inline-block;
+}
+
+mjx-merror {
+  display: inline-block;
+  color: red;
+  background-color: yellow;
+}
+
+mjx-mphantom {
+  visibility: hidden;
+}
+
+_::-webkit-full-page-media, _:future, :root mjx-container {
+  will-change: opacity;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-c::before {
+  display: block;
+  width: 0;
+}
+
+.MJX-TEX {
+  font-family: MJXZERO, MJXTEX;
+}
+
+.TEX-B {
+  font-family: MJXZERO, MJXTEX-B;
+}
+
+.TEX-I {
+  font-family: MJXZERO, MJXTEX-I;
+}
+
+.TEX-MI {
+  font-family: MJXZERO, MJXTEX-MI;
+}
+
+.TEX-BI {
+  font-family: MJXZERO, MJXTEX-BI;
+}
+
+.TEX-S1 {
+  font-family: MJXZERO, MJXTEX-S1;
+}
+
+.TEX-S2 {
+  font-family: MJXZERO, MJXTEX-S2;
+}
+
+.TEX-S3 {
+  font-family: MJXZERO, MJXTEX-S3;
+}
+
+.TEX-S4 {
+  font-family: MJXZERO, MJXTEX-S4;
+}
+
+.TEX-A {
+  font-family: MJXZERO, MJXTEX-A;
+}
+
+.TEX-C {
+  font-family: MJXZERO, MJXTEX-C;
+}
+
+.TEX-CB {
+  font-family: MJXZERO, MJXTEX-CB;
+}
+
+.TEX-FR {
+  font-family: MJXZERO, MJXTEX-FR;
+}
+
+.TEX-FRB {
+  font-family: MJXZERO, MJXTEX-FRB;
+}
+
+.TEX-SS {
+  font-family: MJXZERO, MJXTEX-SS;
+}
+
+.TEX-SSB {
+  font-family: MJXZERO, MJXTEX-SSB;
+}
+
+.TEX-SSI {
+  font-family: MJXZERO, MJXTEX-SSI;
+}
+
+.TEX-SC {
+  font-family: MJXZERO, MJXTEX-SC;
+}
+
+.TEX-T {
+  font-family: MJXZERO, MJXTEX-T;
+}
+
+.TEX-V {
+  font-family: MJXZERO, MJXTEX-V;
+}
+
+.TEX-VB {
+  font-family: MJXZERO, MJXTEX-VB;
+}
+
+mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
+  font-family: MJXZERO, MJXTEX-S1, MJXTEX-S4, MJXTEX, MJXTEX-A ! important;
+}
+
+@font-face /* 0 */ {
+  font-family: MJXZERO;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff") format("woff");
+}
+
+@font-face /* 1 */ {
+  font-family: MJXTEX;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff") format("woff");
+}
+
+@font-face /* 2 */ {
+  font-family: MJXTEX-B;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff") format("woff");
+}
+
+@font-face /* 3 */ {
+  font-family: MJXTEX-I;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff") format("woff");
+}
+
+@font-face /* 4 */ {
+  font-family: MJXTEX-MI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff") format("woff");
+}
+
+@font-face /* 5 */ {
+  font-family: MJXTEX-BI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff") format("woff");
+}
+
+@font-face /* 6 */ {
+  font-family: MJXTEX-S1;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff") format("woff");
+}
+
+@font-face /* 7 */ {
+  font-family: MJXTEX-S2;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff") format("woff");
+}
+
+@font-face /* 8 */ {
+  font-family: MJXTEX-S3;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff") format("woff");
+}
+
+@font-face /* 9 */ {
+  font-family: MJXTEX-S4;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff") format("woff");
+}
+
+@font-face /* 10 */ {
+  font-family: MJXTEX-A;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff") format("woff");
+}
+
+@font-face /* 11 */ {
+  font-family: MJXTEX-C;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff") format("woff");
+}
+
+@font-face /* 12 */ {
+  font-family: MJXTEX-CB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff") format("woff");
+}
+
+@font-face /* 13 */ {
+  font-family: MJXTEX-FR;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff") format("woff");
+}
+
+@font-face /* 14 */ {
+  font-family: MJXTEX-FRB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff") format("woff");
+}
+
+@font-face /* 15 */ {
+  font-family: MJXTEX-SS;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff") format("woff");
+}
+
+@font-face /* 16 */ {
+  font-family: MJXTEX-SSB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff") format("woff");
+}
+
+@font-face /* 17 */ {
+  font-family: MJXTEX-SSI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff") format("woff");
+}
+
+@font-face /* 18 */ {
+  font-family: MJXTEX-SC;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff") format("woff");
+}
+
+@font-face /* 19 */ {
+  font-family: MJXTEX-T;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff") format("woff");
+}
+
+@font-face /* 20 */ {
+  font-family: MJXTEX-V;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff") format("woff");
+}
+
+@font-face /* 21 */ {
+  font-family: MJXTEX-VB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
+}
+</style></head>
+
+  <body><nav class="navbar navbar-light bg-light navbar-expand-lg">
+  <div class="navbar-header">
+    <a class="navbar-brand" id="brand" href="https://fmfi-compbio.github.io/mad/"><img src="./Project - MAD_files/Logo.png" alt="logo" height="100px">&nbsp;&nbsp;1-DAV-202 Data Management 2025/26</a>
+    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#myNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+  <div class="collapse navbar-collapse" id="myNavbar">
+    <ul class="navbar-nav  mr-auto mt-2 mt-lg-0"><li class="nav-item"><a class="nav-link" href="https://fmfi-compbio.github.io/mad/">Materials</a></li><li class="nav-item"><a class="nav-link" href="https://fmfi-compbio.github.io/mad/notes/Introduction.html">Introduction</a></li><li class="nav-item"><a class="nav-link" href="https://fmfi-compbio.github.io/mad/notes/Rules.html">Rules</a></li><li class="nav-item"><a class="nav-link" href="https://fmfi-compbio.github.io/mad/notes/Project.html">Project</a></li><li class="nav-item"><a class="nav-link" href="https://fmfi-compbio.github.io/mad/notes/Contact.html">Contact</a></li></ul>
+  </div>
+</nav>
+<nav class="container-fluid mb-4 bg-light">
+  · <strong>Grades</strong> from marked homeworks are on the server in file <tt>/grades/userid.txt</tt><br>
+· We offer a chance to write a remedial <strong><a href="https://fmfi-compbio.github.io/mad/notes/Midterm.html">midterm</a></strong> again with similar types of quastions as last time. It will take place on May 14 during lecture. It will be necessary to register one week in advance. If you register for second midterm, you lose points from the first midterm. We will not lower the maximum of points on the second midterm as was done on the first.<br>
+· <strong>Dates</strong> of <a href="https://fmfi-compbio.github.io/mad/notes/Project.html">project submission</a> and <a href="https://fmfi-compbio.github.io/mad/notes/Rules.html#Oral_exam">oral exams</a>:<br><em>Early:</em> submit project Tuesday May 19 22:00pm, oral exams Thursday May 21 during class (for students who need or want to finish exams early). Registration for early exam Monday May 18, 22:00 in AIS.<br><em>Regular:</em> project deadline June 9, 22:00 and oral exams on June 15.<br><em>Remedial</em> exams will take place in the last weeks of the exam period. Beware, there will not be much time to prepare a better project.<br>
+· Rust homework is due May 21, 9:00am.<br>
+· Projects should be submitted as homeworks to <tt>/submit/project</tt>.<br>
+
+</nav>
+<div class="container-fluid">
+      <div class="row content">
+        <div class="col-sm-8 text-left"><article class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Project</h1>
+  </header>
+
+  <div class="post-content">
+    <ul id="markdown-toc">
+  <li><a href="https://fmfi-compbio.github.io/mad/notes/Project.html#project-proposal" id="markdown-toc-project-proposal">Project proposal</a></li>
+  <li><a href="https://fmfi-compbio.github.io/mad/notes/Project.html#typical-scheme-of-a-project" id="markdown-toc-typical-scheme-of-a-project">Typical scheme of a project</a></li>
+  <li><a href="https://fmfi-compbio.github.io/mad/notes/Project.html#project-topics" id="markdown-toc-project-topics">Project topics</a></li>
+  <li><a href="https://fmfi-compbio.github.io/mad/notes/Project.html#use-of-ai-code-generation" id="markdown-toc-use-of-ai-code-generation">Use of AI code generation</a></li>
+  <li><a href="https://fmfi-compbio.github.io/mad/notes/Project.html#submitting-projects" id="markdown-toc-submitting-projects">Submitting projects</a></li>
+</ul>
+
+<p>The goal of the project is to apply and extend the skills acquired
+during the course while working on a data analysis project of your
+choice. Your task is to obtain data, analyze it and display the obtained
+results in clear graphs and tables. It is ideal if you obtain
+interesting or useful conclusions, but we will mainly evaluate your
+choice of suitable methods and technical difficulty of the project. The
+scope of programming or data analysis should correspond to roughly three
+homework assignments, but overall the project will be more demanding,
+because unlike assignments, you are not provided with data and a
+sequence of tasks, but you have to come up with them yourself, and the
+first ideas do not always work. You will also have to document your work
+in a written report.</p>
+
+<p>The emphasis should be on tools run on the command line and the use of
+technologies covered during the course, but if needed, you can
+supplement them by other methods. While prototyping your tool and
+creating visualizations for your final report, you may prefer to work in
+interactive environments such as the Jupyter notebook, but in the
+submitted version of the project, most of the code should be in scripts
+runnable from the command line, potentially excluding the final
+visualization, which can remain as a notebook or an interactive website
+(flask).</p>
+
+<p>Project can be done by <strong>pairs of students</strong>, however the project should
+be then bigger. Each student should be primarily responsible for some
+parts of the project and the division of labor should be listed in the
+project report. Pairs submit only one project, but the oral exam is
+separate for each student.</p>
+
+<h2 id="project-proposal">Project proposal</h2>
+
+<p>In roughly two thirds of the semester, you will submit a project
+proposal with length of about half a page. In this proposal, state what
+data you will process, how you will collect it, what the purpose of the
+analysis is and what technologies you plan to use. You can slightly
+change the goals and technologies as you work on the project, but you
+should have an initial idea. We will give you feedback on the proposal,
+and in some cases it may be necessary to change the topic slightly or
+completely. For a suitable project proposal submitted on time, you will
+receive 5% of the total grade. We recommend consulting the instructors
+before submitting the proposal.</p>
+
+<p><strong>How to submit the proposal:</strong> copy a file in txt or pdf format to
+<code class="language-plaintext highlighter-rouge">/submit/proposal/username</code> on the course server.</p>
+
+<h2 id="typical-scheme-of-a-project">Typical scheme of a project</h2>
+
+<p>Most projects consist of the following stages which should also be
+represented in the report</p>
+
+<ul>
+  <li><strong>Acquiring data.</strong> This can be easy if someone gives you the data
+or if you download it from internet as a single file. It can also be
+more difficult if you need to parse the data from many data files or
+webpages. Do not forget to check if the data was downloaded
+correctly (at least by manually checking several records). The
+project report (in combination with protocol) should clearly
+indicate where and how you obtained the data.</li>
+  <li><strong>Preprocessing data to a suitable form.</strong> This stage involves
+parsing input formats, selecting useful data, checking them for
+correctness, filtering incomplete records etc. Store your data set
+in a file or database suitable for further processing. Do not forget
+to check if data seems to be correct. In the report, include basic
+characteristics of the data such as the overall number of records,
+attributes of each record and value ranges for these attributes etc.
+This will help the reader to understand the character of your data
+set.</li>
+  <li><strong>Further analyses and data visualization.</strong> At this stage try to
+arrive at interesting or useful conclusions. The results can be
+static figures and tables or an interactive webpage in flask.
+However, even for an interactive webpage include selected results in
+the report as static images.</li>
+</ul>
+
+<p>If your project significantly differs from this scheme, consult the
+instructors.</p>
+
+<h2 id="project-topics">Project topics</h2>
+
+<ul>
+  <li>You can process some data useful for your bachelor or master thesis
+or data necessary for another course (in that case mention in the
+report which course it is and also notify the instructors of the
+other course that you have used results from this course). For DAV
+and BIN students, this project can be a good opportunity to select a
+topic of the bachelor thesis and start working on it.</li>
+  <li>You can try to find someone who needs to process some data set but
+does not have the necessary skills (this could be scientists from
+different fields, non-profit organizations or even companies). If
+you contact third parties in this way, it is especially important
+that you try to produce the best project you can, in order to
+maintain the good reputation of your study program.</li>
+  <li>In your project, you can compare speed or accuracy of several
+programs for the same task. The project will consist of preparing
+the input data for the programs, support for automated running of
+the programs and evaluation of results.</li>
+  <li>You can also try to replicate an analysis published in a scientific
+paper or a blog. You can check if you obtain the same results as the
+original authors and try variations of the original analysis, such
+as trying different parameters, changing settings, adding new
+visualizations etc.</li>
+  <li>You can also find interesting data on the internet and analyze them.
+Students often choose topics related to their hobbies and
+activities, such as sports, computer games, programming contests,
+music, cooking etc. Many successful projects involve scrapping such
+data from some websites.</li>
+</ul>
+
+<p><strong>Not recommended:</strong></p>
+
+<ul>
+  <li>We do not recommend choosing a dataset from Kaggle or a similar
+site.</li>
+  <li>Many of these datasets are dubious, submitted by anonymous users
+without a good explanation of where the data came from. If you do
+use a dataset from Kaggle, make sure you research its background
+thoroughly so that you can convince us that it is trustworthy.</li>
+  <li>Another problem is that these datasets are usually already
+preprocessed. Thus work related to this course is mostly done and it
+is hard to find suitable tasks for the project.</li>
+  <li>Finally, many of these datasets already have many analyses done and
+published, so why add more to an already large pile?</li>
+</ul>
+
+<h2 id="use-of-ai-code-generation">Use of AI code generation</h2>
+
+<ul>
+  <li>Some editors provide options for automated code generation based on
+context or comments.</li>
+  <li>On the project, you are allowed to use such tools (but not on the
+homework).</li>
+  <li>If you use such features, make sure you closely examine any
+generated code and correct any mistakes. You should understand how
+the code works and test it thoroughly. On the oral exam, we will
+check if you can explain how your code works and to modify it.</li>
+  <li>Acknowledge any such tools used in the resources section of your
+protocol.</li>
+</ul>
+
+<h2 id="submitting-projects">Submitting projects</h2>
+
+<p>Similarly as for homeworks, submit the required files to the specified
+folder. Submit the following:</p>
+
+<ul>
+  <li>Your <strong>programs and data files</strong> (do not submit large data above
+50Mb or sensitive data such as personal information)</li>
+  <li><strong>Protocol</strong> in txt format with brief notes similarly as for
+homeworks. If should contain
+    <ul>
+      <li>a list of submitted files with brief descriptions</li>
+      <li>detailed steps done in data analysis (commands used)</li>
+      <li>explanation how your script can be run by somebody else (if
+relevant), including steps for installing any non-standard
+libraries used</li>
+      <li>list of resources used (data, programs, documentation and other
+literature etc.)</li>
+    </ul>
+  </li>
+  <li><strong>Project report</strong> in pdf format. Unlike the less formal protocol,
+the report should be a coherent text written in a technical style.
+You can write in English or Slovak, but avoid grammar mistakes. The
+report should contain the following information:
+    <ul>
+      <li>an introduction explaining goals of the project and necessary
+background from the area you work in,</li>
+      <li>a description of your data, including where and how it was
+obtained and what it contains,</li>
+      <li>a brief method description which does not contain details of
+individual steps but rather overview of the method and its
+justification,</li>
+      <li>results of your analysis (tables, graphs etc.), description of
+these results and discussion about conclusions that can be made
+from your results,</li>
+      <li>a conclusion where you discuss which parts of the project were
+difficult and what problems you have encountered, which parts
+you have in contrast were able to do easily, which parts you
+would recommend in retrospect to do differently, what you have
+learned during the project etc.</li>
+      <li>Additional recommendations for the report:
+        <ul>
+          <li>Do not forget to explain the meaning of individual tables
+and graphs (axes, colors etc.).</li>
+          <li>Include the final results as well initial exploration of
+your data and analyses that you have used to verify
+correctness of the data and your analysis method.</li>
+          <li>You can interleave results and methods or keep them
+separate.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+
+  </div>
+
+</article>
+</div>
+      </div>
+    </div><!-- orig https://github.com/jekyll/minima/blob/master/_includes/footer.html -->
+
+<footer class="container-fluid text-center">
+  <p><a href="https://fmfi-compbio.github.io/mad/">1-DAV-202 Data Management 2025/26</a> · <a href="https://fmfi-compbio.github.io/mad/notes/Contact.html">Contact</a> <!-- · <a href="/mad/archive/">Archive</a>--></p> 
+</footer>
+
+
+  
+
+</body></html>
