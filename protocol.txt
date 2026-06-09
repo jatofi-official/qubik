@@ -38,6 +38,7 @@ Data processing
 
 Elevation
 - topography_resources/lookup.py: DEM test script validating rasterio elevation sampling from the project GeoTIFF.
+- topography_resources/output_SRTMGL3.tif: GeoTIFF elevation data. It is the only large file, but I hope you'll forgive me for it.
 
 Analysis
 - analysis/analyze_distributions.py: generates distribution plots and normal-fit visualizations from aggregated daily trip metrics.
