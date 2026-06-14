@@ -126,4 +126,4 @@ The most difficult parts (data-filtering and data collection backend) were done 
 
 
 
-That is all. I have in total spent about ~30-50 hours on this project.
+That is all. I have in total spent about ~30-50 hours on this project. I have discussed the project with Mr. Gafurov for his past experience with the topic, therefore if possible I would like to have the final oral exam with him.
