@@ -5,8 +5,9 @@
 cd "$(dirname "$(readlink -f "$0")")" || exit 1
 
 # Override with e.g. DB_FILE=/path/db.txt KEYS_FILE=/path/keys.txt ./fetch_all.sh
-DB_FILE="${DB_FILE:-db.txt}"
-KEYS_FILE="${KEYS_FILE:-keys.txt}"
+# By default db.txt / keys.txt are looked for here, then in the repo root (one folder up).
+DB_FILE="${DB_FILE:-$([[ -f db.txt ]] && echo db.txt || echo ../db.txt)}"
+KEYS_FILE="${KEYS_FILE:-$([[ -f keys.txt ]] && echo keys.txt || echo ../keys.txt)}"
 
 {
     read user
