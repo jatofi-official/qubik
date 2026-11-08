@@ -7,7 +7,7 @@ Everything else (config, schema, CLI tools, logs) lives in `owntracks/`, outside
 1. `mysql -u root -p -e "CREATE DATABASE owntracks CHARACTER SET utf8mb4; CREATE USER 'owntracks'@'localhost' IDENTIFIED BY '...'; GRANT SELECT,INSERT ON owntracks.* TO 'owntracks'@'localhost';"`
    (use a separate admin user for `add_participant.php`, or grant it INSERT on participants too – INSERT is already included).
 2. `mysql -u root -p owntracks < schema.sql`
-3. `cp config.example.php config.php`, edit, `mkdir logs && chmod 770 logs` (writable by the PHP-FPM user, e.g. www-data).
+3. `cp db.example.php db.php`, edit, `mkdir logs && chmod 770 logs` (writable by the PHP-FPM user, e.g. www-data).
 4. `php bin/add_participant.php alice AL` – prints the password once.
 5. Apache: `webpage-live/endpoint/.htaccess` passes the Authorization header (needs `AllowOverride FileInfo` / `All`
    for the site, and mod_rewrite). If you can't use .htaccess, put in the vhost: `CGIPassAuth On`.

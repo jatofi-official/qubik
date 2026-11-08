@@ -2,8 +2,10 @@
 declare(strict_types=1);
 
 // OwnTracks HTTP endpoint. Served at /endpoint (this is the only public file).
-// Config lives outside the web root: <repo>/owntracks/config.php
-$config = require dirname(__DIR__, 2) . '/owntracks/config.php';
+// DB connection (db.php) lives outside the web root: <repo>/owntracks/db.php
+$config = ['log_file' => dirname(__DIR__, 2) . '/owntracks/logs/owntracks.log'];
+mysqli_report(MYSQLI_REPORT_OFF);
+require dirname(__DIR__, 2) . '/owntracks/db.php'; // defines $mysqli
 
 const MAX_BODY = 65536;
 const MIN_TST = 1577836800; // 2020-01-01 UTC
@@ -50,14 +52,22 @@ if ($user === null) {
 }
 if ($user === null || $pass === null) unauthorized();
 
-$pdo = new PDO($config['db_dsn'], $config['db_user'], $config['db_pass'], [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_EMULATE_PREPARES => false,
-]);
+if ($mysqli->connect_errno) {
+    logLine($config, 'DB connect error ' . $mysqli->connect_errno);
+    respond(500, '{"error":"server error"}');
+}
 
-$st = $pdo->prepare('SELECT id, password_hash, active FROM participants WHERE username = ?');
-$st->execute([$user]);
-$p = $st->fetch(PDO::FETCH_ASSOC);
+// Run a prepared statement; all params bound as strings (NULL stays NULL). Returns the statement.
+function q(mysqli $db, array $cfg, string $sql, array $params = []): mysqli_stmt {
+    $st = $db->prepare($sql);
+    if (!$st) { logLine($cfg, 'SQL prepare: ' . $db->error); respond(500, '{"error":"server error"}'); }
+    if ($params) $st->bind_param(str_repeat('s', count($params)), ...$params);
+    if (!$st->execute()) { logLine($cfg, 'SQL exec: ' . $st->error); respond(500, '{"error":"server error"}'); }
+    return $st;
+}
+
+$st = q($mysqli, $config, 'SELECT id, password_hash, active FROM participants WHERE username = ?', [$user]);
+$p = $st->get_result()->fetch_assoc();
 // Always run password_verify (dummy hash if user unknown) to keep timing similar
 $hash = $p['password_hash'] ?? '$2y$10$usesomesillystringforsaltuOq1ZtY1x0aKpYb1Zk4vKkq2X8h5W';
 $ok = password_verify($pass, $hash);
@@ -77,17 +87,17 @@ if (!is_array($data) || ($data !== [] && array_is_list($data))) respond(400, '{"
 $now = gmdate('Y-m-d H:i:s');
 $type = is_string($data['_type'] ?? null) ? $data['_type'] : null;
 
-function logMessage(PDO $pdo, int $pid, string $now, ?string $type, string $reason, string $raw): void {
-    $pdo->prepare('INSERT INTO message_log (participant_id, received_at, type, reason, raw_json) VALUES (?,?,?,?,?)')
-        ->execute([$pid, $now, $type !== null ? substr($type, 0, 32) : null, $reason, $raw]);
+function logMessage(mysqli $db, array $cfg, int $pid, string $now, ?string $type, string $reason, string $raw): void {
+    q($db, $cfg, 'INSERT INTO message_log (participant_id, received_at, type, reason, raw_json) VALUES (?,?,?,?,?)',
+      [$pid, $now, $type !== null ? substr($type, 0, 32) : null, $reason, $raw]);
 }
 
 if ($type === 'encrypted') {
-    logMessage($pdo, $pid, $now, $type, 'encrypted payload not supported', $raw);
+    logMessage($mysqli, $config, $pid, $now, $type, 'encrypted payload not supported', $raw);
     respond(200);
 }
 if ($type !== 'location') {
-    logMessage($pdo, $pid, $now, $type, 'non-location message', $raw);
+    logMessage($mysqli, $config, $pid, $now, $type, 'non-location message', $raw);
     respond(200);
 }
 
@@ -102,7 +112,7 @@ if (!(is_int($lat) || is_float($lat)) || !(is_int($lon) || is_float($lon)) || !i
     $reason = 'tst out of range';
 }
 if ($reason !== null) {
-    logMessage($pdo, $pid, $now, $type, 'invalid: ' . $reason, $raw);
+    logMessage($mysqli, $config, $pid, $now, $type, 'invalid: ' . $reason, $raw);
     respond(200);
 }
 
@@ -117,8 +127,8 @@ $sql = 'INSERT INTO gps_points
    acc, alt, vel, batt, bs, conn, trigger_t, tid, raw_json)
   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   ON DUPLICATE KEY UPDATE id = id';
-$pdo->prepare($sql)->execute([
-    $pid, $hdr('HTTP_X_LIMIT_D'), $hdr('HTTP_X_LIMIT_U'), $str('_id', 64), $tst, $int('created_at'), $now,
+q($mysqli, $config, $sql, [
+    (string)$pid, $hdr('HTTP_X_LIMIT_D'), $hdr('HTTP_X_LIMIT_U'), $str('_id', 64), $tst, $int('created_at'), $now,
     number_format((float)$lat, 7, '.', ''), number_format((float)$lon, 7, '.', ''),
     $int('acc'), $int('alt'), $int('vel'), $int('batt'), $int('bs'),
     $str('conn', 4), $str('t', 4), $str('tid', 8), $raw,
