@@ -8,3 +8,5 @@ firmware/output/*
 topography_resources/*
 
 __pycache__
+owntracks/config.php
+owntracks/logs/

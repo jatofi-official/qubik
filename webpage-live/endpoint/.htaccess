@@ -1,0 +1,8 @@
+# Pass the Authorization header to PHP (Apache + PHP-FPM drops it by default)
+CGIPassAuth On
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+# Only index.php is served from here
+DirectoryIndex index.php
