@@ -43,19 +43,20 @@ pipeline: $(DB_FILE)
 # The releaseDB is slightly manually edited.
 # From my experience, it is sometimes better to fix a few outliers that to work hours
 # on creating a fix that fixes them.
-$(RELEASE_DB):
+
+$(RELEASE_DB): clean-analysis-db
+	cd analysis && python3 daily_analysis.py -sqlite ../$(DB_FILE) -v
 	cp $(DB_FILE) $(RELEASE_DB)
 
-analysis: $(RELEASE_DB) clean-analysis-db
-	cd analysis && python3 daily_analysis.py -sqlite ../$(RELEASE_DB) -v
-	cd analysis && python3 analyze_distributions.py -sqlite ../$(RELEASE_DB) -v
+analysis-distribution: $(RELEASE_DB)
+	cd analysis && python3 analyze_distributions.py -sqlite ../$(DB_FILE) -v
 
 
-clean-analysis-db: $(RELEASE_DB)
-	sqlite3 $(RELEASE_DB) 'DROP TABLE IF EXISTS daily_stats;'
+clean-analysis-db: $(DB_FILE)
+	sqlite3 $(DB_FILE) 'DROP TABLE IF EXISTS daily_stats;'
 
 
-deploy: analysis
+deploy: $(RELEASE_DB)
 	cd flask  && export FLASK_APP=main.py && flask run --port=$(PORT)
 
 

@@ -538,8 +538,8 @@
                 // Check if stationary and map to a known place within x meters
                 if (ping.mode === 'STATIONARY') {
                     for (const place of allPlaces) {
-                        const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
-                        if (d < 0.0005) {  //I KNOW IT SHOULD NOT BE HARDCODED BUT I DONT HAVE TIME FOR IT NOW
+                        const d = L.latLng(ping.lat, ping.lng).distanceTo(L.latLng(place.latitude, place.longitude));
+                        if (d <= 100) {
                             activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
                             break;
                         }
@@ -667,8 +667,8 @@
                 // Check if stationary and map to a known place
                 if (ping.mode === 'STATIONARY') {
                     for (const place of allPlaces) {
-                        const d = Math.hypot(ping.lat - place.latitude, ping.lng - place.longitude);
-                        if (d < 0.0005) { 
+                        const d = L.latLng(ping.lat, ping.lng).distanceTo(L.latLng(place.latitude, place.longitude));
+                        if (d <= 100) { 
                             activePlacesMap.set(`${place.latitude}_${place.longitude}`, place);
                             matchedPlace = place;
                             break;
