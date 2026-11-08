@@ -4,8 +4,7 @@ Public file: `webpage-live/endpoint/index.php` -> https://qubik.mustangy.sk/endp
 Everything else (config, schema, CLI tools, logs) lives in `owntracks/`, outside the web root.
 
 ## Setup
-1. `mysql -u root -p -e "CREATE DATABASE owntracks CHARACTER SET utf8mb4; CREATE USER 'owntracks'@'localhost' IDENTIFIED BY '...'; GRANT SELECT,INSERT ON owntracks.* TO 'owntracks'@'localhost';"`
-   (use a separate admin user for `add_participant.php`, or grant it INSERT on participants too – INSERT is already included).
+1. `mysql -u root -p -e "CREATE DATABASE owntracks CHARACTER SET utf8mb4; CREATE USER 'owntracks'@'localhost' IDENTIFIED BY '...'; GRANT SELECT,INSERT,UPDATE ON owntracks.* TO 'owntracks'@'localhost';"`
 2. `mysql -u root -p owntracks < schema.sql`
 3. `cp db.example.php db.php`, edit, `mkdir logs && chmod 770 logs` (writable by the PHP-FPM user, e.g. www-data).
 4. `php bin/add_participant.php alice AL` – prints the password once.
@@ -13,6 +12,7 @@ Everything else (config, schema, CLI tools, logs) lives in `owntracks/`, outside
    for the site, and mod_rewrite). If you can't use .htaccess, put in the vhost: `CGIPassAuth On`.
    nginx equivalent: `fastcgi_param HTTP_AUTHORIZATION $http_authorization;`
 6. OwnTracks app: Mode HTTP, URL `https://qubik.mustangy.sk/endpoint`, authentication = username/password.
+   If `/endpoint` still answers 301, use `https://qubik.mustangy.sk/endpoint/` (trailing slash) in the app and curl tests.
 
 Export: `php bin/export_csv.php alice 2026-11-01 2026-11-08 > alice.csv`
 

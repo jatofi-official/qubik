@@ -6,3 +6,8 @@ CGIPassAuth On
 </IfModule>
 # Only index.php is served from here
 DirectoryIndex index.php
+
+# Serve /endpoint directly instead of 301-redirecting to /endpoint/ (the redirect
+# would be http:// behind the tunnel and would turn POST into GET)
+DirectorySlash Off
+Options -Indexes
